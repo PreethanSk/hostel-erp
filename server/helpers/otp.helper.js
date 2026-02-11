@@ -73,12 +73,12 @@ module.exports.sendUserOTP = async (userId = null, mobileNumber = '', emailAddre
         let otpMessage = message;
 
         if (refType === 'login') {
-            emailMessage = 'Your SLH register email verification OTP is given below.';
-            otpMessage = 'Your SLH mobile number verification code is:';
+            emailMessage = 'Your HostelHost register email verification OTP is given below.';
+            otpMessage = 'Your HostelHost mobile number verification code is:';
         }
         if (refType === 'register') {
-            emailMessage = 'Thank you for register SLH. Your email verification OTP is given below.';
-            otpMessage = 'Your SLH mobile number verification code is:';
+            emailMessage = 'Thank you for register HostelHost. Your email verification OTP is given below.';
+            otpMessage = 'Your HostelHost mobile number verification code is:';
         }
 
         const mobileWithCode = '91' + mobileNumber.toString();

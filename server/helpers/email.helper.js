@@ -13,18 +13,19 @@ const initMailer = () => {
   }
 
   if (!transporter) {
-    console.log("Transporter setup done.")
+    console.log("Transporter setup done.");
     const dbConfig = global.config.email;
+    const pass = (dbConfig.pass || "").trim();
     transporter = nodemailer.createTransport({
       host: dbConfig.host,
-      port: parseInt(dbConfig.port),
-      secure: parseInt(dbConfig.port) === 465 ? true : false,
-      pool: true,              // ✅ use connection pooling
-      maxConnections: 5,       // adjust as needed
-      maxMessages: 100,        // reuse connections
+      port: parseInt(dbConfig.port, 10),
+      secure: parseInt(dbConfig.port, 10) === 465,
+      pool: true,
+      maxConnections: 5,
+      maxMessages: 100,
       auth: {
         user: dbConfig.user,
-        pass: dbConfig.pass,
+        pass: pass,
       },
       tls: { rejectUnauthorized: false },
     });
@@ -42,7 +43,7 @@ module.exports.sendEmailOTP = async (_to, _otp, _message) => {
     const mailOptions = {
       from: global.config.email.user,
       to: _to?.email,
-      subject: 'HostelHives Email OTP',
+      subject: 'HostelHost Email OTP',
       html: emailContent,
     };
 
@@ -79,10 +80,10 @@ module.exports.sendEmailWithPDF = async (toEmail, subject, pdfBuffer, fileName) 
                 <div style="font-family: Arial, sans-serif; padding: 20px;">
                     <h2>Invoice Receipt</h2>
                     <p>Please find attached the receipt voucher for your payment.</p>
-                    <p>Thank you for choosing HostelHives.</p>
+                    <p>Thank you for choosing HostelHost.</p>
                     <br>
                     <p>Best regards,</p>
-                    <p>HostelHives Team</p>
+                    <p>HostelHost Team</p>
                 </div>
             `,
       attachments: [
@@ -140,7 +141,7 @@ module.exports.sendAdmissionApprovedEmail = async ({
     const mailOptions = {
       from: global.config.email.user,
       to: candidate.email,
-      subject: "Shri Ladies Hostel - Admission Approved",
+      subject: "HostelHost - Admission Approved",
       html: emailContent,
     };
 

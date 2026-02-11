@@ -281,6 +281,44 @@ This single file contains every API function:
 
 ---
 
+## Email & OTP — How to Enable (Optional Until Later)
+
+You **don’t need your own domain or mailbox** to send emails. Use a **transactional email service**; they give you a “from” address and SMTP/API to send.
+
+### Option A: Use a transactional email service (recommended)
+
+| Service | Free tier | Notes |
+|--------|-----------|--------|
+| **Resend** | 3,000/month | Simple API, good DX. Use SMTP or their Node SDK. |
+| **SendGrid** | 100/day | Already in `package.json`. SMTP or `@sendgrid/mail`. |
+| **Brevo** (ex-Sendinblue) | 300/day | SMTP + API, EU-friendly. |
+| **Mailgun** | 5,000/month (first 3 months) | SMTP + API. |
+| **Gmail SMTP** | Your Gmail limit | Use an **App Password** (not your normal password). |
+
+**Typical flow:** Sign up → get SMTP host/port/user/pass (or API key) → put them in `.env` → app sends from their provided address (e.g. `noreply@yourdomain.com` or their subdomain).
+
+**Current app wiring:** Backend uses **nodemailer** with SMTP. Set in `.env`:
+
+- `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS` (and `EMAIL_SECURE=true` for port 465)
+
+Then in code:
+
+1. **OTP emails** — In `server/helpers/otp.helper.js`, the call to `sendEmailOTP()` is **commented out** (line ~55). Uncomment it when you have valid SMTP creds.
+2. **Admission-approved email** — In `server/helpers/email.helper.js`, `sendAdmissionApprovedEmail()` is already used; it will work as soon as SMTP is configured.
+3. **Dev shortcut** — OTP is currently hardcoded to `123456` in `otp.helper.js` (`generateOTP` and mobile path). That’s intentional so login works without real email/SMS. Remove or gate that when you enable real OTP.
+
+### Option B: Skip email to the last part
+
+You can **leave email disabled** until you’re ready:
+
+- Keep `EMAIL_*` in `.env` empty (or omit).
+- Keep the `sendEmailOTP()` call commented and the dev OTP `123456` so **admin/student OTP login still works** (you just never send real emails).
+- Admission-approved “email” will no-op or fail gracefully if `candidate.email` is missing or SMTP isn’t configured (the code already checks and logs).
+
+So: **no need for “your own email”** — use a transactional provider when you want real emails; until then, skip it and keep using the existing dev OTP behavior.
+
+---
+
 ## Phase 3: Dashboard
 
 ### 3.1 Backend
