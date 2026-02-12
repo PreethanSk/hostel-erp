@@ -17,7 +17,7 @@ jobs:
       
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  # Using version tag for maintainability
         with:
           fetch-depth: 0
       

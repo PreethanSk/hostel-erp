@@ -1,0 +1,2 @@
+# Requirements for repository management scripts
+requests>=2.31.0

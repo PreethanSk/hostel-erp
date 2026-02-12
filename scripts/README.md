@@ -10,7 +10,13 @@ These scripts automate the process of changing the repository's default branch t
 
 #### Using Python (Recommended):
 ```bash
+# Install dependencies
+pip install -r scripts/requirements.txt
+
+# Set your GitHub token
 export GITHUB_TOKEN=your_token_here
+
+# Run the script
 python3 scripts/set-default-branch.py
 ```
 

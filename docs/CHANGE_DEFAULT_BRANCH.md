@@ -63,6 +63,9 @@ We've included two scripts that can automate this process using the GitHub API.
 #### Using the Python Script:
 
 ```bash
+# Install dependencies first
+pip install -r scripts/requirements.txt
+
 # Set your GitHub token
 export GITHUB_TOKEN=your_token_here
 

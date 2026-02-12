@@ -20,7 +20,7 @@ fi
 echo "Checking if '$NEW_DEFAULT_BRANCH' branch exists..."
 
 # Check if the branch exists
-BRANCH_CHECK=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+BRANCH_CHECK=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
     "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/branches/$NEW_DEFAULT_BRANCH")
 
 if echo "$BRANCH_CHECK" | grep -q '"message": "Not Found"'; then
@@ -32,7 +32,7 @@ echo "Branch '$NEW_DEFAULT_BRANCH' exists. Proceeding to set it as default..."
 
 # Update the default branch
 RESPONSE=$(curl -s -X PATCH \
-    -H "Authorization: token $GITHUB_TOKEN" \
+    -H "Authorization: Bearer $GITHUB_TOKEN" \
     -H "Accept: application/vnd.github.v3+json" \
     "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME" \
     -d "{\"default_branch\":\"$NEW_DEFAULT_BRANCH\"}")

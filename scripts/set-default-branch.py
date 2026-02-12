@@ -2,17 +2,22 @@
 """
 Script to set the default branch to 'dev' for the hostel-erp repository.
 This script uses the GitHub API to change the default branch.
+
+Requirements:
+    - requests library (install with: pip install requests)
 """
 
 import os
 import sys
-import json
+
 try:
     import requests
 except ImportError:
-    print("Installing requests library...")
-    os.system(f"{sys.executable} -m pip install requests -q")
-    import requests
+    print("❌ Error: 'requests' library is not installed")
+    print("\nPlease install it using:")
+    print(f"  {sys.executable} -m pip install requests")
+    print("\nOr add it to your requirements.txt file")
+    sys.exit(1)
 
 REPO_OWNER = "PreethanSk"
 REPO_NAME = "hostel-erp"
@@ -34,7 +39,7 @@ def set_default_branch():
         return False
     
     headers = {
-        "Authorization": f"token {github_token}",
+        "Authorization": f"Bearer {github_token}",
         "Accept": "application/vnd.github.v3+json"
     }
     
