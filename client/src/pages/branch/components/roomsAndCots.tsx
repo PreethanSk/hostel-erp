@@ -607,7 +607,7 @@ export default function RoomsAndCots({ branch, readOnly }: Props) {
                                 <span className="">Cots</span>
                                 <img
                                   height="16"
-                                  src={IMAGES_ICON.TableViewIcon}
+                                  src={IMAGES_ICON.EyeIcon}
                                   alt="icon"
                                   draggable="false"
                                 />
