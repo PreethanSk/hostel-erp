@@ -27,10 +27,6 @@ exports.verifyEmailMobileOtpLogin = async (req, res, next) => {
                 }
             ]
         })
-        if (!userData) {
-            responseError.message = 'User not registered';
-            return res.status(400).json(await formatResponse.error(responseError));
-        }
         const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.query.keyUser);
         const isMobile = /^\d{6,15}$/.test(req.query.keyUser);
         let loginType = ''
@@ -65,7 +61,7 @@ exports.verifyEmailMobileOtpLogin = async (req, res, next) => {
                 { emailVerifiedAt: verifiedAt },
                 { where: { id: userData.id } }
             )
-        } else if (otpStatus.mobileOtp) {
+        } else if (otpStatus.emailOtp) {
             await db.Users.update(
                 { mobileVerifiedAt: verifiedAt },
                 { where: { id: userData.id } }

@@ -164,6 +164,11 @@ export default function Index({ PageAccess }: any) {
                   return lowerSearchInput === '' || Object?.values(content)?.some((value) =>
                     value?.toString()?.toLowerCase()?.includes(lowerSearchInput)
                   );
+                })?.filter((content: any) => {
+                  const lowerSearchInput = _search?.toLowerCase()?.trim();
+                  return lowerSearchInput === '' || Object?.values(content)?.some((value) =>
+                    value?.toString()?.toLowerCase()?.includes(lowerSearchInput)
+                  );
                 })?.map((item: any, index: number) => (
                   <TableRow key={index}>
                     <TableCell>{index + 1}</TableCell>
@@ -173,25 +178,25 @@ export default function Index({ PageAccess }: any) {
                       : <span className="fs12 statusBgInactive text-danger rounded--50 px-3 py-1">Inactive</span>
                     }</TableCell>
                     <TableCell align="center">
-                      <div className="d-flex align-items-center justify-content-center gap-3">
-                        <div className="d-flex align-items-center justify-content-center gap-1" role="button" onClick={() => handleUpdateItem(item)}>
-                          <span className="">Edit</span>
-                          <img height="16" src={IMAGES_ICON.EditIcon} alt="icon" draggable="false" />
-                        </div>
-                        <div className="d-flex align-items-center justify-content-center gap-1" role="button" onClick={() => handleDeleteItem(item)}>
-                          <span className="">Delete</span>
-                          <img height="16" src={IMAGES_ICON.DeleteIcon} alt="icon" draggable="false" />
-                        </div>
-                      </div>
+                          <div className="d-flex align-items-center justify-content-center gap-3">
+                            <div className="d-flex align-items-center justify-content-center gap-1" role="button" onClick={() => handleUpdateItem(item)}>
+                              <span className="">Edit</span>
+                              <img height="16" src={IMAGES_ICON.EditIcon} alt="icon" draggable="false" />
+                            </div>
+                            <div className="d-flex align-items-center justify-content-center gap-1" role="button" onClick={() => handleDeleteItem(item)}>
+                              <span className="">Delete</span>
+                              <img height="16" src={IMAGES_ICON.DeleteIcon} alt="icon" draggable="false" />
+                            </div>
+                          </div>
                     </TableCell>
                   </TableRow>
                 ))
               ) : !_tableLoading && (
                 <TableRow>
-                  <TableCell className="fs-3 text-muted" align="center" colSpan={4}>Data Not Found</TableCell>
+                  <TableCell className="fs-3 text-muted" align="center" colSpan={5}>Data Not Found</TableCell>
                 </TableRow>
               )}
-              <SkeletonProviderTables columns={4} visible={_tableLoading} />
+              <SkeletonProviderTables columns={5} visible={_tableLoading} />
             </TableBody>
           </Table>
         </TableContainer>

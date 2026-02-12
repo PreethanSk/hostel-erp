@@ -8,7 +8,7 @@ module.exports = {
     host: process.env.DATABASE_HOST,
     dialect: process.env.DATABASE_DIALECT,
     port: process.env.DATABASE_PORT,
-    logging: process.env.DATABASE_LOGGING === 'true',
+    logging: process.env.DATABASE_LOGGING === 'true', // Convert string to boolean
     serviceAPI: {
       db: process.env.DATABASE_SERVICE_API_DB,
       user: process.env.DATABASE_SERVICE_API_NAME,

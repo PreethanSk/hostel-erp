@@ -27,7 +27,6 @@ exports.path = {
   getMasterIssueSubCategory: base + 'get-master-issue-sub-category',
   getMasterPageList: base + 'get-master-page-list',
   getMasterUserRole: base + 'get-master-user-role',
-  getMasterServiceProviderCategory: base + 'get-master-service-provider-category',
   getRolePageAccess: base + 'get-role-page-access',
   getRolePageAccessByRoleId: base + 'get-role-page-access-by-role-id',
   getVacates: base + 'get-vacate',
@@ -43,7 +42,6 @@ exports.path = {
   deleteMasterIssueSubCategory: base + "delete-master-issue-sub-category",
   deleteMasterPageList: base + "delete-master-page-list",
   deleteMasterUserRole: base + "delete-master-user-role",
-  deleteMasterServiceProviderCategory: base + "delete-master-service-provider-category",
 
   insertUpdateMasterAmenitiesCategory: base + "insert-update-master-amenities-category",
   insertUpdateMasterAmenitiesSubCategory: base + "insert-update-master-amenities-sub-category",
@@ -56,7 +54,6 @@ exports.path = {
   insertUpdateMasterIssueSubCategory: base + "insert-update-master-issue-sub-category",
   insertUpdateMasterPageList: base + "insert-update-master-page-list",
   insertUpdateMasterUserRole: base + "insert-update-master-user-role",
-  insertUpdateMasterServiceProviderCategory: base + "insert-update-master-service-provider-category",
   insertUpdateRolePageAccess: base + "insert-update-role-page-access",
 
   // Branch

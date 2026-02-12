@@ -80,28 +80,8 @@ export default function Index() {
 
 
     const getPrintTableHeadBody = () => {
-        const header = [
-            "S. No",
-            "Location",
-            "Candidate Id",
-            "Candidate Name",
-            "Mobile No",
-            "Out Date",
-            "Out Time",
-            "In Date",
-            "In Time"
-        ];
-        const body = _tableItems?.map((item: any, index: number) => [
-            index + 1,
-            item?.location || '-',
-            item?.candidateId || '-',
-            item?.candidateName || '-',
-            item?.mobileNumber || '-',
-            item?.date || '-',
-            item?.outTime || '-',
-            item?.date || '-',
-            item?.inTime || '-',
-        ]);
+        const header = ["S. No", "Candidate Name", "Status"];
+        const body = _tableItems?.map((item: any, index: number) => [index + 1, item?.name, item?.isActive]);
         return { header, body }
     }
 
@@ -173,7 +153,7 @@ export default function Index() {
 
     useEffect(() => {
         getGridList();
-    }, [_page, _rowsPerPage])
+    }, [])
 
     return (<>
         {!_editForm && <div className="container">

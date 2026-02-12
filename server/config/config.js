@@ -24,4 +24,4 @@ module.exports = {
     "dialect": config.database.dialect,
     "port": config.database.port
   }
-};
+}

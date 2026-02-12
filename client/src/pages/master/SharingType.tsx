@@ -52,6 +52,7 @@ export default function Index({ PageAccess }: any) {
     });
   }
 
+
   const handleGoBack = () => {
     _setEditForm(false);
     _setLoading(false);

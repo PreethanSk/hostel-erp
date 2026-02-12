@@ -1,445 +1,436 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, Button, MenuItem } from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import { ROUTES } from "../../configs/constants";
-import {
-    getBranchGridList,
-    getDashboardBookings,
-    getDashboardComplaints,
-    getDashboardCots,
-    getDashboardPayments,
-} from "../../models";
-import CustomSelect from "../../components/helpers/CustomSelect";
+import moment from "moment";
+import { getBranchGridList, getDashboardBookings, getDashboardBookingsDetail, getDashboardComplaints, getDashboardComplaintsDetail, getDashboardCotsDetail, getDashboardPayments, getDashboardPaymentsDetail, } from "../../models";
+import { CustomFilterMultiSelect, } from "../../components/helpers/CustomSelect";
 import DateRangeSelector from "../../components/helpers/DateRangeSelector";
-import { CustomAlert } from "../../services/HelperService";
+import DashboardPaymentsDetailModal from "../dashboardDetail/dashboard-payments-detail";
+import DashboardBookingsDetailModal from "../dashboardDetail/dashboard-bookings-detail";
+import DashboardCotsDetailModal from "../dashboardDetail/dashboard-cots-detail";
+import DashboardComplaintsDetailModal from "../dashboardDetail/dashboard-complaints-detail";
+import { Skeleton } from "@mui/material";
 
-type BranchItem = {
-    id: number;
-    branchName: string;
-};
+interface DataCardProps {
+  title: string;
+  value: string | number;
+  colorClass: string;
+  loading: boolean;
+  onClick: () => void;
+}
 
-type CotsSummary = {
-    total: number;
-    occupied: number;
-    available: number;
-    booked: number;
-};
+const DataCard: React.FC<DataCardProps> = ({ title, value, colorClass, onClick, loading }) => (
+  <div className="col-md-3 my-2">
+    <div className="bg-gray rounded shadow-sm p-2 cursor-pointer border" onClick={onClick} role="button">
+      <div className={`mb-2 fs14 fw-bold ${colorClass}`}>{title}</div>
+      {loading ? <Skeleton className="rounded" variant="rectangular" height={20} /> : <div className="fw-bold fs18">{value}</div>}
+    </div>
+  </div>
+);
 
-type ComplaintsSummary = {
-    Open: number;
-    InProgress: number;
-    Hold: number;
-    Closed: number;
-};
+interface DashboardData {
+  payments?: Record<string, number>;
+  bookings?: Record<string, number>;
+  cots?: Record<string, number>;
+  complaints?: Record<string, number>;
+}
 
-type PaymentsSummary = {
-    totalCandidates: number;
-    totalPaid: number;
-    totalPayments: number;
-    totalAdvance: number;
-    totalPending: number;
-    totalRefund: number;
-};
+interface Branch {
+  id: string;
+  branchName: string;
+}
 
-type BookingsSummary = {
-    totalBooking: number;
-    cancelled: number;
-    confirmBooking: number;
-    pendingBooking: number;
-    vacantCount: number;
-};
+interface ModalState {
+  type: "payments" | "bookings" | "cots" | "complaints" | null;
+  dataType: string;
+  params: {
+    fromDate: string;
+    toDate: string;
+    branchId: string;
+  };
+}
 
-const initialCots: CotsSummary = {
-    total: 0,
-    occupied: 0,
-    available: 0,
-    booked: 0,
-};
+export default function Dashboard() {
+  const [_dashboardData, _setDashboardData] = useState<DashboardData>({});
+  const [_dashboardDataDetail, _setDashboardDataDetail] = useState<any>({});
+  const [branchList, setBranchList] = useState<Branch[]>([]);
+  const [filterData, setFilterData] = useState<{ branchList: number[] }>({
+    branchList: [],
+  });
+  const [dateRange, setDateRange] = useState({
+    fromDate: moment().startOf("month").format("YYYY-MM-DD"),
+    toDate: moment().format("YYYY-MM-DD"),
+  });
 
-const initialComplaints: ComplaintsSummary = {
-    Open: 0,
-    InProgress: 0,
-    Hold: 0,
-    Closed: 0,
-};
+  const [detailModal, setDetailModal] = useState<ModalState>({
+    type: null,
+    dataType: "",
+    params: { fromDate: "", toDate: "", branchId: "" },
+  });
 
-const initialPayments: PaymentsSummary = {
-    totalCandidates: 0,
-    totalPaid: 0,
-    totalPayments: 0,
-    totalAdvance: 0,
-    totalPending: 0,
-    totalRefund: 0,
-};
+  const [_loading, _setLoading] = useState({ cots: true, complaints: true, payments: true, bookings: true });
+  const loadData = async (key: string, fn: any, query: any): Promise<void> => {
+    try {
+      _setLoading((prev) => ({ ...prev, [key]: true }));
 
-const initialBookings: BookingsSummary = {
-    totalBooking: 0,
-    cancelled: 0,
-    confirmBooking: 0,
-    pendingBooking: 0,
-    vacantCount: 0,
-};
+      const response = await fn(query);
 
-export default function Home() {
-    const navigate = useNavigate();
+      _setDashboardDataDetail((prev: any) => ({
+        ...prev,
+        [`${key}Detail`]: response?.data?.result || {},
+      }));
+    } catch (err) {
+      console.error(`Error loading ${String(key)}:`, err);
+    } finally {
+      _setLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
-    const [_branchList, _setBranchList] = useState<BranchItem[]>([]);
-    const [_branchId, _setBranchId] = useState<string>("");
-    const [_fromDate, _setFromDate] = useState<string>("");
-    const [_toDate, _setToDate] = useState<string>("");
+  const fetchDashboardData = async () => {
+    const branchIdParam = filterData.branchList.length > 0 ? `branchId=${filterData.branchList.join(",")}&` : "";
+    const query = `?${branchIdParam}from=${dateRange.fromDate}&to=${dateRange.toDate}`;
+    const [complaints, payments, bookings] = await Promise.allSettled([
+      // getDashboardCots(query),
+      getDashboardComplaints(query),
+      getDashboardPayments(query),
+      getDashboardBookings(query),
+    ]);
 
-    const [_loading, _setLoading] = useState<boolean>(false);
-    const [_cots, _setCots] = useState<CotsSummary>(initialCots);
-    const [_complaints, _setComplaints] = useState<ComplaintsSummary>(initialComplaints);
-    const [_payments, _setPayments] = useState<PaymentsSummary>(initialPayments);
-    const [_bookings, _setBookings] = useState<BookingsSummary>(initialBookings);
+    _setDashboardData({
+      // cots: cots.status === "fulfilled" ? cots.value?.data?.result || {} : {},
+      complaints: complaints.status === "fulfilled" ? complaints.value?.data?.result || {} : {},
+      payments: payments.status === "fulfilled" ? payments.value?.data?.result || {} : {},
+      bookings: bookings.status === "fulfilled" ? bookings.value?.data?.result || {} : {},
+    });
 
-    const buildQueryString = () => {
-        const params = new URLSearchParams();
-        if (_fromDate) params.append("from", _fromDate);
-        if (_toDate) params.append("to", _toDate);
-        if (_branchId) params.append("branchId", _branchId);
-        const query = params.toString();
-        return query ? `?${query}` : "";
-    };
+    await Promise.all([
+      loadData('cots', getDashboardCotsDetail, query),
+      loadData('complaints', getDashboardComplaintsDetail, query),
+      loadData('payments', getDashboardPaymentsDetail, query),
+      loadData('bookings', getDashboardBookingsDetail, query),
+    ]);
 
-    const loadBranches = () => {
-        getBranchGridList(1, 0)
-            .then((resp: any) => {
-                if (resp?.data?.status === "success") {
-                    _setBranchList(resp?.data?.result?.results || []);
-                }
-            })
-            .catch(console.log);
-    };
+    // try {
+    //   const [cotsDetail, complaintsDetail, paymentsDetail, bookingsDetail] =
+    //     await Promise.allSettled([
+    //       getDashboardCotsDetail(query),
+    //       getDashboardComplaintsDetail(query),
+    //       getDashboardPaymentsDetail(query),
+    //       getDashboardBookingsDetail(query),
+    //     ]);
+    //   _setDashboardDataDetail({
+    //     cotsDetail: cotsDetail.status === "fulfilled" ? cotsDetail?.value?.data?.result || {} : {},
+    //     complaintsDetail: complaintsDetail.status === "fulfilled" ? complaintsDetail?.value?.data?.result || {} : {},
+    //     paymentsDetail: paymentsDetail.status === "fulfilled" ? paymentsDetail?.value?.data?.result || {} : {},
+    //     bookingsDetail: bookingsDetail.status === "fulfilled" ? bookingsDetail?.value?.data?.result || {} : {},
+    //   });
+    // } catch (error) {
+    // } finally {
+    // }
 
-    const loadDashboard = () => {
-        const queryStr = buildQueryString();
-        _setLoading(true);
-        Promise.all([
-            getDashboardCots(queryStr),
-            getDashboardComplaints(queryStr),
-            getDashboardPayments(queryStr),
-            getDashboardBookings(queryStr),
-        ])
-            .then(([cotsResp, complaintsResp, paymentsResp, bookingsResp]: any[]) => {
-                if (cotsResp?.data?.status === "success") {
-                    _setCots({
-                        ...initialCots,
-                        ...(cotsResp?.data?.result || {}),
-                    });
-                } else if (cotsResp) {
-                    CustomAlert("warning", cotsResp?.data?.error || "Unable to load cots summary");
-                }
+    try {
+      const branchRes = await getBranchGridList();
+      if (branchRes?.data?.status === "success") {
+        setBranchList(branchRes.data.result.results);
+      }
+    } catch (err) {
+      console.error("Error fetching branches", err);
+    }
+  };
 
-                if (complaintsResp?.data?.status === "success") {
-                    _setComplaints({
-                        ...initialComplaints,
-                        ...(complaintsResp?.data?.result || {}),
-                    });
-                } else if (complaintsResp) {
-                    CustomAlert("warning", complaintsResp?.data?.error || "Unable to load complaints summary");
-                }
+  const openDetailModal = (type: ModalState["type"], dataType: string) => {
+    setDetailModal({
+      type,
+      dataType,
+      params: {
+        fromDate: dateRange.fromDate,
+        toDate: dateRange.toDate,
+        branchId: filterData.branchList.join(","),
+      },
+    });
+  };
 
-                if (paymentsResp?.data?.status === "success") {
-                    _setPayments({
-                        ...initialPayments,
-                        ...(paymentsResp?.data?.result || {}),
-                    });
-                } else if (paymentsResp) {
-                    CustomAlert("warning", paymentsResp?.data?.error || "Unable to load payments summary");
-                }
+  const closeModal = () => {
+    setDetailModal({ type: null, dataType: "", params: detailModal.params });
+  };
 
-                if (bookingsResp?.data?.status === "success") {
-                    _setBookings({
-                        ...initialBookings,
-                        ...(bookingsResp?.data?.result || {}),
-                    });
-                } else if (bookingsResp) {
-                    CustomAlert("warning", bookingsResp?.data?.error || "Unable to load bookings summary");
-                }
-            })
-            .catch((err: any) => {
-                console.log(err);
-                CustomAlert("warning", "Unable to load dashboard");
-            })
-            .finally(() => _setLoading(false));
-    };
+  useEffect(() => {
+    fetchDashboardData();
+  }, [filterData, dateRange]);
 
-    const handleChangeDate = (from: string, to: string) => {
-        _setFromDate(from);
-        _setToDate(to);
-    };
 
-    const handleViewCotsDetail = () => navigate(ROUTES.HOME.DASHBOARD_DETAIL.COTS);
-    const handleViewComplaintsDetail = () => navigate(ROUTES.HOME.DASHBOARD_DETAIL.COMPLAINTS);
-    const handleViewPaymentsDetail = () => navigate(ROUTES.HOME.DASHBOARD_DETAIL.PAYMENTS);
-    const handleViewBookingsDetail = () => navigate(ROUTES.HOME.DASHBOARD_DETAIL.BOOKINGS);
+  return (
+    <>
+      <div className="bg-white">
+        <div className="container">
+          <div className="fw-bold row align-items-center">
+            <div className="col-md-6 fs18">Dashboard</div>
+            <div className="col-md-6">
+              <div className="row align-items-center">
+                <div className="col-md-3 my-2">
+                  <CustomFilterMultiSelect className="bg-white"
+                    value={filterData.branchList}
+                    onChange={(e: React.ChangeEvent<{ value: number[] }>) => {
+                      const selected = e.target.value as number[];
+                      setFilterData({ ...filterData, branchList: selected });
+                      // const branchIdParam =
+                      //   selected.length > 0
+                      //     ? `branchId=${selected.join(",")}&`
+                      //     : "";
+                      // const query = `?${branchIdParam}from=${dateRange.fromDate}&to=${dateRange.toDate}`;
 
-    useEffect(() => {
-        loadBranches();
-    }, []);
-
-    useEffect(() => {
-        loadDashboard();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [_branchId, _fromDate, _toDate]);
-
-    return (
-        <div className="container-fluid py-3">
-            <div className="container">
-                <div className="row justify-content-between align-items-center py-3">
-                    <div className="col-md-6 my-2">
-                        <h5 className="fw-bold mb-1">Dashboard</h5>
-                        <p className="text-muted mb-0 fs12">
-                            Overall snapshot of cots, complaints, payments and bookings.
-                        </p>
-                    </div>
-                    <div className="col-md-6 my-2">
-                        <div className="row align-items-center">
-                            <div className="col-sm-5 my-1 px-1">
-                                <CustomSelect
-                                    className="bg-white"
-                                    placeholder="Select Branch"
-                                    value={_branchId}
-                                    onChange={(e: any) => _setBranchId(e?.target?.value || "")}
-                                    padding={"0px 10px"}
-                                    menuItem={[
-                                        <MenuItem key="All" value="">
-                                            All Branches
-                                        </MenuItem>,
-                                        ...(_branchList || [])?.map((item: BranchItem) => (
-                                            <MenuItem key={item?.id} value={item?.id}>
-                                                {item?.branchName}
-                                            </MenuItem>
-                                        )),
-                                    ]}
-                                />
-                            </div>
-                            <div className="col-sm-7 my-1 px-1">
-                                <DateRangeSelector
-                                    className="bg-white"
-                                    handleChangeDate={handleChangeDate}
-                                />
-                            </div>
-                        </div>
-                    </div>
+                      // Promise.allSettled([
+                      //   getDashboardCots(query),
+                      //   getDashboardComplaints(query),
+                      //   getDashboardPayments(query),
+                      //   getDashboardBookings(query),
+                      //   getDashboardCotsDetail(query),
+                      //   getDashboardComplaintsDetail(query),
+                      //   getDashboardPaymentsDetail(query),
+                      //   getDashboardBookingsDetail(query),
+                      // ])
+                      //   .then((
+                      //     [cots, complaints, payments, bookings, cotsDetail, complaintsDetail, paymentsDetail, bookingsDetail,]
+                      //   ) => {
+                      //     _setDashboardData({
+                      //       cots: cots.status === "fulfilled" ? cots.value?.data?.result || {} : {},
+                      //       complaints: complaints.status === "fulfilled" ? complaints.value?.data?.result || {} : {},
+                      //       payments: payments.status === "fulfilled" ? payments.value?.data?.result || {} : {},
+                      //       bookings: bookings.status === "fulfilled" ? bookings.value?.data?.result || {} : {},
+                      //     });
+                      //     _setDashboardDataDetail({
+                      //       cotsDetail: cotsDetail.status === "fulfilled" ? cotsDetail?.value?.data?.result || {} : {},
+                      //       complaintsDetail: complaintsDetail.status === "fulfilled" ? complaintsDetail?.value?.data?.result || {} : {},
+                      //       paymentsDetail: paymentsDetail.status === "fulfilled" ? paymentsDetail?.value?.data?.result || {} : {},
+                      //       bookingsDetail: bookingsDetail.status === "fulfilled" ? bookingsDetail?.value?.data?.result || {} : {},
+                      //     });
+                      //   })
+                    }}
+                    placeholder={"Branch"}
+                    menuItem={branchList.map((item) => ({
+                      title: item.branchName,
+                      value: Number(item.id),
+                    }))}
+                  />
                 </div>
-
-                <div className="row g-3">
-                    <div className="col-lg-3 col-md-6">
-                        <Card className="h-100 shadow-sm">
-                            <CardContent>
-                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <div className="text-muted text-uppercase fs12 mb-1">
-                                            Cots
-                                        </div>
-                                        <div className="fw-bold fs-4">
-                                            {_cots.total || 0}
-                                        </div>
-                                    </div>
-                                    <span className="badge bg-primary text-white fs12">
-                                        {_loading ? "Loading..." : "Summary"}
-                                    </span>
-                                </div>
-                                <div className="fs12 text-muted mb-2">
-                                    Occupied / Available / Booked
-                                </div>
-                                <div className="d-flex flex-wrap gap-3 mb-3 fs12">
-                                    <div>
-                                        <div className="text-muted">Occupied</div>
-                                        <div className="fw-bold text-success">
-                                            {_cots.occupied || 0}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-muted">Available</div>
-                                        <div className="fw-bold text-primary">
-                                            {_cots.available || 0}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-muted">Booked</div>
-                                        <div className="fw-bold text-warning">
-                                            {_cots.booked || 0}
-                                        </div>
-                                    </div>
-                                </div>
-                                <Button
-                                    size="small"
-                                    className="text-capitalize px-0"
-                                    onClick={handleViewCotsDetail}
-                                >
-                                    View details
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <div className="col-lg-3 col-md-6">
-                        <Card className="h-100 shadow-sm">
-                            <CardContent>
-                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <div className="text-muted text-uppercase fs12 mb-1">
-                                            Complaints
-                                        </div>
-                                        <div className="fw-bold fs-4">
-                                            {(_complaints.Open || 0) +
-                                                (_complaints.InProgress || 0) +
-                                                (_complaints.Hold || 0) +
-                                                (_complaints.Closed || 0)}
-                                        </div>
-                                    </div>
-                                    <span className="badge bg-danger text-white fs12">
-                                        {_loading ? "Loading..." : "By status"}
-                                    </span>
-                                </div>
-                                <div className="d-flex flex-wrap gap-3 mb-3 fs12">
-                                    <div>
-                                        <div className="text-muted">Open</div>
-                                        <div className="fw-bold text-danger">
-                                            {_complaints.Open || 0}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-muted">In Progress</div>
-                                        <div className="fw-bold text-warning">
-                                            {_complaints.InProgress || 0}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-muted">Hold</div>
-                                        <div className="fw-bold text-secondary">
-                                            {_complaints.Hold || 0}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-muted">Closed</div>
-                                        <div className="fw-bold text-success">
-                                            {_complaints.Closed || 0}
-                                        </div>
-                                    </div>
-                                </div>
-                                <Button
-                                    size="small"
-                                    className="text-capitalize px-0"
-                                    onClick={handleViewComplaintsDetail}
-                                >
-                                    View details
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <div className="col-lg-3 col-md-6">
-                        <Card className="h-100 shadow-sm">
-                            <CardContent>
-                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <div className="text-muted text-uppercase fs12 mb-1">
-                                            Payments
-                                        </div>
-                                        <div className="fw-bold fs-4">
-                                            ₹{_payments.totalPaid?.toFixed(2) || "0.00"}
-                                        </div>
-                                    </div>
-                                    <span className="badge bg-success text-white fs12">
-                                        {_loading ? "Loading..." : "Amount"}
-                                    </span>
-                                </div>
-                                <div className="fs12 text-muted mb-2">
-                                    Total paid / advance / pending / refund
-                                </div>
-                                <div className="d-flex flex-wrap gap-3 mb-3 fs12">
-                                    <div>
-                                        <div className="text-muted">Advance</div>
-                                        <div className="fw-bold text-info">
-                                            ₹{_payments.totalAdvance?.toFixed(2) || "0.00"}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-muted">Pending</div>
-                                        <div className="fw-bold text-warning">
-                                            ₹{_payments.totalPending?.toFixed(2) || "0.00"}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-muted">Refund</div>
-                                        <div className="fw-bold text-secondary">
-                                            ₹{_payments.totalRefund?.toFixed(2) || "0.00"}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="fs12 text-muted mb-2">
-                                    Candidates: {_payments.totalCandidates || 0}
-                                </div>
-                                <Button
-                                    size="small"
-                                    className="text-capitalize px-0"
-                                    onClick={handleViewPaymentsDetail}
-                                >
-                                    View details
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <div className="col-lg-3 col-md-6">
-                        <Card className="h-100 shadow-sm">
-                            <CardContent>
-                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <div className="text-muted text-uppercase fs12 mb-1">
-                                            Bookings
-                                        </div>
-                                        <div className="fw-bold fs-4">
-                                            {_bookings.totalBooking || 0}
-                                        </div>
-                                    </div>
-                                    <span className="badge bg-info text-white fs12">
-                                        {_loading ? "Loading..." : "Status"}
-                                    </span>
-                                </div>
-                                <div className="d-flex flex-wrap gap-3 mb-3 fs12">
-                                    <div>
-                                        <div className="text-muted">Confirmed</div>
-                                        <div className="fw-bold text-success">
-                                            {_bookings.confirmBooking || 0}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-muted">Pending</div>
-                                        <div className="fw-bold text-warning">
-                                            {_bookings.pendingBooking || 0}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-muted">Cancelled / Rejected</div>
-                                        <div className="fw-bold text-danger">
-                                            {_bookings.cancelled || 0}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-muted">Vacant mismatch</div>
-                                        <div className="fw-bold text-secondary">
-                                            {_bookings.vacantCount || 0}
-                                        </div>
-                                    </div>
-                                </div>
-                                <Button
-                                    size="small"
-                                    className="text-capitalize px-0"
-                                    onClick={handleViewBookingsDetail}
-                                >
-                                    View details
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
+                <div className="col-md-9 my-2 d-flex align-items-center">
+                  <DateRangeSelector
+                    className="bg-white w-100"
+                    handleChangeDate={(fromDate: string, toDate: string) => { setDateRange({ fromDate, toDate }); }}
+                  />
                 </div>
+              </div>
             </div>
+          </div>
+
+          <div className="row">
+            <div className="col-md-6 my-2">
+              {/* PAYMENTS */}
+              <div className="row">
+                <div className="fw-bold fs18 mt-4">PAYMENTS</div>
+                <DataCard
+                  title="Total Payments"
+                  loading={_loading?.payments}
+                  value={`₹ ${_dashboardData?.payments?.totalPayments || 0}`}
+                  colorClass="fontGreen"
+                  onClick={() => openDetailModal("payments", "totalPayments")}
+                />
+                <DataCard
+                  title="Paid"
+                  loading={_loading?.payments}
+                  value={`₹ ${_dashboardData?.payments?.totalPaid || 0}`}
+                  colorClass="fontBlue"
+                  onClick={() => openDetailModal("payments", "paid")}
+                />
+                {/* <DataCard
+              title="Token Advance"
+              value={`₹ ${_dashboardData?.payments?.totalAdvance || 0}`}
+              colorClass="fontBlue"
+              onClick={() => openDetailModal("payments", "advance")}
+            /> */}
+                <DataCard
+                  title="Pending"
+                  loading={_loading?.payments}
+                  value={`₹ ${_dashboardData?.payments?.totalPending || 0}`}
+                  colorClass="fontRed"
+                  onClick={() => openDetailModal("payments", "pending")}
+                />
+                <DataCard
+                  title="Refund"
+                  loading={_loading?.payments}
+                  value={`₹ ${_dashboardData?.payments?.totalRefund || 0}`}
+                  colorClass="fontRed"
+                  onClick={() => openDetailModal("payments", "refund")}
+                />
+              </div>
+            </div>
+            {/* BOOKINGS */}
+            <div className="col-md-6 my-2">
+              <div className="row">
+                <div className="fw-bold fs18 mt-4">BOOKINGS</div>
+                <DataCard
+                  title="Total Booking"
+                  loading={_loading?.bookings}
+                  value={_dashboardData?.bookings?.totalBooking || 0}
+                  colorClass="fontRed"
+                  onClick={() => openDetailModal("bookings", "totalBooking")}
+                />
+                <DataCard
+                  title="Confirm Paid"
+                  loading={_loading?.bookings}
+                  value={_dashboardData?.bookings?.confirmBooking || 0}
+                  colorClass="fontGreen"
+                  onClick={() => openDetailModal("bookings", "confirmBooking")}
+                />
+                <DataCard
+                  title="Pending"
+                  loading={_loading?.bookings}
+                  value={_dashboardData?.bookings?.pendingBooking || 0}
+                  colorClass="fontBlue"
+                  onClick={() => openDetailModal("bookings", "pendingBooking")}
+                />
+                <DataCard
+                  title="Cancelled"
+                  loading={_loading?.bookings}
+                  value={_dashboardData?.bookings?.cancelled || 0}
+                  colorClass="fontRed"
+                  onClick={() => openDetailModal("bookings", "cancelled")}
+                />
+                <DataCard
+                  title="Vacant"
+                  loading={_loading?.bookings}
+                  value={_dashboardData?.bookings?.vacantCount || 0}
+                  colorClass="fontOrange"
+                  onClick={() => openDetailModal("bookings", "vacant")}
+                />
+              </div>
+            </div>
+            
+            {/* COTS */}
+            <div className="col-md-6 my-2">
+              <div className="row">
+                <div className="fw-bold fs18 mt-4">COTS</div>
+                <DataCard
+                  title="Total Cots"
+                  loading={_loading?.cots}
+                  value={_dashboardDataDetail?.cotsDetail?.totalCots?.length || 0}
+                  colorClass="fontBlue"
+                  onClick={() => openDetailModal("cots", "totalCots")}
+                />
+                <DataCard
+                  title="Occupied"
+                  loading={_loading?.cots}
+                  value={_dashboardDataDetail?.cotsDetail?.occupied?.length || 0}
+                  colorClass="fontRed"
+                  onClick={() => openDetailModal("cots", "occupied")}
+                />
+                <DataCard
+                  title="Available"
+                  loading={_loading?.cots}
+                  value={_dashboardDataDetail?.cotsDetail?.available?.length || 0}
+                  colorClass="fontGreen"
+                  onClick={() => openDetailModal("cots", "available")}
+                />
+                <DataCard
+                  title="Maintenance"
+                  loading={_loading?.cots}
+                  value={_dashboardDataDetail?.cotsDetail?.maintenance?.length || 0}
+                  colorClass="fontGreen"
+                  onClick={() => openDetailModal("cots", "maintenance")}
+                />
+                <DataCard
+                  title="Booked Cots"
+                  loading={_loading?.cots}
+                  value={_dashboardDataDetail?.cotsDetail?.booked?.length || 0}
+                  colorClass="fontOrange"
+                  onClick={() => openDetailModal("cots", "booked")}
+                />
+              </div>
+            </div>
+            {/* COMPLAINTS */}
+            <div className="col-md-6 my-2">
+              <div className="row">
+                <div className="fw-bold fs18 mt-4">COMPLAINTS</div>
+                <DataCard
+                  title="Open"
+                  loading={_loading?.complaints}
+                  value={_dashboardData?.complaints?.Open || 0}
+                  colorClass="fontOrange"
+                  onClick={() => openDetailModal("complaints", "Open")}
+                />
+                <DataCard
+                  title="In-Progress"
+                  loading={_loading?.complaints}
+                  value={_dashboardData?.complaints?.InProgress || 0}
+                  colorClass="fontBlue"
+                  onClick={() => openDetailModal("complaints", "InProgress")}
+                />
+                <DataCard
+                  title="On-Hold"
+                  loading={_loading?.complaints}
+                  value={_dashboardData?.complaints?.Hold || 0}
+                  colorClass="fontRed"
+                  onClick={() => openDetailModal("complaints", "Hold")}
+                />
+                <DataCard
+                  title="Resolved"
+                  loading={_loading?.complaints}
+                  value={_dashboardData?.complaints?.Closed || 0}
+                  colorClass="fontGreen"
+                  onClick={() => openDetailModal("complaints", "Closed")}
+                />
+                <DataCard
+                  title="Rejected"
+                  loading={_loading?.complaints}
+                  value={_dashboardData?.complaints?.Reject || 0}
+                  colorClass="fontRed"
+                  onClick={() => openDetailModal("complaints", "Reject")}
+                />
+              </div>
+            </div>
+          </div>
+
+
+
+
         </div>
-    );
+      </div>
+
+      {/* Modals */}
+      {detailModal?.type === "payments" && (
+        <DashboardPaymentsDetailModal
+          open={true}
+          onClose={closeModal}
+          {...detailModal.params}
+          type={detailModal?.dataType}
+          detailedData={_dashboardDataDetail?.paymentsDetail}
+        />
+      )}
+      {detailModal?.type === "bookings" && (
+        <DashboardBookingsDetailModal
+          open={true}
+          onClose={closeModal}
+          {...detailModal.params}
+          type={detailModal?.dataType}
+          detailedData={_dashboardDataDetail?.bookingsDetail}
+        />
+      )}
+      {detailModal?.type === "cots" && (
+        <DashboardCotsDetailModal
+          open={true}
+          onClose={closeModal}
+          {...detailModal.params}
+          type={detailModal?.dataType}
+          detailedData={_dashboardDataDetail?.cotsDetail}
+        />
+      )}
+      {detailModal?.type === "complaints" && (
+        <DashboardComplaintsDetailModal
+          open={true}
+          onClose={closeModal}
+          {...detailModal.params}
+          type={detailModal?.dataType}
+          detailedData={_dashboardDataDetail?.complaintsDetail}
+        />
+      )}
+    </>
+  );
 }

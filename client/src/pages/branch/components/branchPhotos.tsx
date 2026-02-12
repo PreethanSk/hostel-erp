@@ -1,238 +1,177 @@
-import { ChangeEvent, useEffect, useState } from "react";
-import { Button, Grid } from "@mui/material";
+import { MutableRefObject, useEffect, useRef, useState } from "react";
+import { Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
 import { IMAGES_ICON } from "../../../assets/images/exportImages";
-import { ROUTES } from "../../../configs/constants";
-import { CustomAlert } from "../../../services/HelperService";
+import { styled } from '@mui/material';
 import { commonUploadFile, getBranchPhotosList, insertUpdateBranchPhotos } from "../../../models";
+import { CustomAlert, textFieldStyle } from "../../../services/HelperService";
+import { ROUTES } from "../../../configs/constants";
+import { useStateValue } from "../../../providers/StateProvider";
+import { SkeletonPage, } from "../../../providers/SkeletonProvider";
+import Swal from "sweetalert2";
 
-type Props = {
-  branch: any;
-  onUpdated?: (branch: any | null) => void;
-  readOnly?: boolean;
-};
+const Input = styled('input')({
+    display: 'none',
+});
 
-type BranchPhoto = {
-  id?: number;
-  branchId: number;
-  photoUrl: string;
-  isActive: boolean;
-};
+export default function BranchPhotos({ handleBack, handleNext }: any) {
+    const [{ branchDetails }, dispatch]: any = useStateValue()
+    const refDocument = useRef() as MutableRefObject<HTMLInputElement>;
+    const [_loading, _setLoading] = useState<any>(false);
+    const [_pageLoading, _setPageLoading] = useState(true);
+    const [_removePhoto, _setRemovePhoto] = useState(-1)
+    const [_formData, _setFormData] = useState<any>({
+        photos: [],
+    });
 
-export default function BranchPhotos({ branch, onUpdated, readOnly }: Props) {
-  const [_photos, _setPhotos] = useState<BranchPhoto[]>([]);
-  const [_uploading, _setUploading] = useState(false);
-
-  useEffect(() => {
-    if (!branch?.id) {
-      _setPhotos([]);
-      return;
+    const checkValidation = () => {
+        let isValid = true;
+        if (branchDetails?.branchDetails?.isActive && !_formData?.photos?.length) {
+            isValid = false
+            CustomAlert("warning", "Photos needs to upload");
+        }
+        return isValid;
     }
-    loadPhotos();
-  }, [branch?.id]);
 
-  const loadPhotos = () => {
-    if (!branch?.id) return;
-    getBranchPhotosList(branch.id)
-      .then((resp: any) => {
-        if (resp?.data?.status === "success") {
-          _setPhotos(resp?.data?.result || []);
+    const handleSubmitForm = () => {
+        _setLoading(true);
+        if (!checkValidation()) {
+            _setLoading(false);
+            return;
         }
-      })
-      .catch((err: any) => {
-        console.log(err);
-        CustomAlert("warning", "Unable to load photos");
-      });
-  };
 
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    if (readOnly || !branch?.id) return;
-    const files = e.target.files;
-    if (!files || !files.length) return;
-
-    _setUploading(true);
-    const newPhotos: BranchPhoto[] = [];
-
-    try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const resp: any = await commonUploadFile(formData);
-        if (resp?.data?.file) {
-          newPhotos.push({
-            id: 0,
-            branchId: branch.id,
-            photoUrl: resp.data.file,
-            isActive: true,
-          });
+        const body = {
+            photos: _formData?.photos || []
         }
-      }
 
-      if (newPhotos.length) {
-        const payload = {
-          photos: [
-            ..._photos.map((p: any) => ({
-              id: p?.id,
-              branchId: branch.id,
-              photoUrl: p?.photoUrl,
-              isActive: p?.isActive ?? true,
-            })),
-            ...newPhotos,
-          ],
-        };
+        insertUpdateBranchPhotos(body)
+            .then((resp) => {
+                if (resp?.data?.status === "success") {
+                    dispatch({
+                        type: "SET_BRANCH_DETAILS",
+                        data: { ...branchDetails, photos: body.photos }
+                    })
+                    CustomAlert("success", "Branch photos saved");
+                    handleNext()
+                }
+            })
+            .catch(console.log)
+            .finally(() => _setLoading(false));
+    }
 
-        insertUpdateBranchPhotos(payload)
-          .then((resp: any) => {
-            if (resp?.data?.status === "success") {
-              CustomAlert("success", "Photos updated successfully");
-              loadPhotos();
-              onUpdated && onUpdated(null);
-            } else {
-              CustomAlert("warning", resp?.data?.error || "Failed to update photos");
+    const onUpload = async (files: any) => {
+        _setLoading(true)
+        let imageList: any = []
+        for (let i = 0; i < files?.length; i++) {
+            if (i === 50) {
+                break;
             }
-          })
-          .catch((err: any) => {
-            console.log(err);
-            CustomAlert("warning", "Failed to update photos");
-          })
-          .finally(() => _setUploading(false));
-      } else {
-        _setUploading(false);
-      }
-    } catch (error) {
-      console.log(error);
-      CustomAlert("warning", "Failed to upload photos");
-      _setUploading(false);
-    } finally {
-      e.target.value = "";
-    }
-  };
-
-  const togglePhotoActive = (photo: BranchPhoto) => {
-    if (readOnly) return;
-    const updated = _photos.map((p) =>
-      p.id === photo.id ? { ...p, isActive: !p.isActive } : p
-    );
-    _setPhotos(updated);
-  };
-
-  const savePhotos = () => {
-    if (readOnly || !branch?.id) return;
-    const payload = {
-      photos: _photos.map((p: any) => ({
-        id: p?.id,
-        branchId: branch.id,
-        photoUrl: p?.photoUrl,
-        isActive: p?.isActive ?? true,
-      })),
-    };
-
-    insertUpdateBranchPhotos(payload)
-      .then((resp: any) => {
-        if (resp?.data?.status === "success") {
-          CustomAlert("success", "Photos updated successfully");
-          loadPhotos();
-          onUpdated && onUpdated(null);
-        } else {
-          CustomAlert("warning", resp?.data?.error || "Failed to update photos");
+            const formData = new FormData();
+            formData.append('file', files[i]);
+            await commonUploadFile(formData)
+                .then((response) => {
+                    if (response.status === 200) {
+                        imageList.push({ id: 0, photoUrl: response?.data?.file, isActive: true, branchId: branchDetails?.branchDetails?.id })
+                    }
+                })
+                .catch(error => { console.log(error.response); })
         }
-      })
-      .catch((err: any) => {
-        console.log(err);
-        CustomAlert("warning", "Failed to update photos");
-      });
-  };
+        await _setFormData({ photos: [..._formData?.photos, ...imageList] })
+        await _setLoading(false)
+    }
 
-  return (
-    <div className="bg-field-gray border rounded px-3 py-2">
-      <div className="d-flex align-items-center justify-content-between borderBottomLight pb-2 mb-2">
-        <div className="fw-bold">Branch Photos</div>
-        <div className="d-flex align-items-center gap-2">
-          {!readOnly && (
-            <>
-              <label className="btn btn-light btn-sm text-capitalize mb-0">
-                <img
-                  height={18}
-                  draggable={false}
-                  src={IMAGES_ICON.TableNewItemIcon}
-                  alt="icon"
-                  className="me-1"
-                />
-                Upload
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  hidden
-                  onChange={handleFileChange}
-                  disabled={_uploading || !branch?.id}
-                />
-              </label>
-              <Button
-                size="small"
-                variant="contained"
-                color="primary"
-                className="text-capitalize"
-                disabled={_uploading || !branch?.id}
-                onClick={savePhotos}
-              >
-                Save
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+    const removePhotosItem = (index: number) => {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "You want to delete this image!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#388024",
+            cancelButtonColor: "#bf1029",
+            confirmButtonText: "Yes, delete it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                let _temp = _formData?.photos;
+                _temp[index].isActive = false;
+                _setFormData({ photos: [..._temp] })
+            }
+        });
+    }
 
-      {!branch?.id ? (
-        <div className="text-muted text-center py-4">
-          Please create or select a branch first.
+    const getOtherList = () => {
+        _setPageLoading(true)
+        getBranchPhotosList(branchDetails?.branchDetails?.id)
+            .then((resp) => {
+                if (resp?.data?.status === "success") {
+                    _setFormData({ ...branchDetails?.branchDetails, photos: resp?.data?.result });
+                }
+            })
+            .catch(console.log)
+            .finally(() => _setPageLoading(false))
+    }
+
+    useEffect(() => {
+        if (branchDetails) {
+            getOtherList()
+        }
+    }, [branchDetails])
+
+    return <>
+        {_pageLoading ? <div className="text-center">
+            <SkeletonPage />
         </div>
-      ) : _photos?.length ? (
-        <Grid container spacing={2}>
-          {_photos.map((photo: any) => (
-            <Grid item xs={6} md={4} key={photo?.id || photo?.photoUrl}>
-              <div className="border rounded bg-white overflow-hidden h-100 d-flex flex-column">
-                <div className="ratio ratio-4x3 bg-light">
-                  <img
-                    src={ROUTES.API.DOWNLOAD_FILE + photo?.photoUrl}
-                    alt="Branch"
-                    className="w-100 h-100 object-fit-cover"
-                    draggable={false}
-                  />
-                </div>
-                <div className="px-2 py-1 d-flex align-items-center justify-content-between">
-                  <div className="fs12 text-muted text-truncate">
-                    {photo?.photoUrl?.split("/")?.pop()}
-                  </div>
-                  {!readOnly && (
-                    <div
-                      className="fs12"
-                      role="button"
-                      onClick={() => togglePhotoActive(photo)}
-                    >
-                      {photo?.isActive ? (
-                        <span className="statusBgActive text-success rounded--50 px-2 py-1">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="statusBgInactive text-danger rounded--50 px-2 py-1">
-                          Inactive
-                        </span>
-                      )}
+            :
+            _formData?.photos?.length > 0 ? <div className="">
+                <div className="col-md-6 mx-auto fieldBorderDashed rounded--1 p-4">
+                    <div className="text-center">
+                        <Button variant="text" component="label">
+                            <div className="fs-6 fw-bold text-dark darkBorder rounded px-4 py-2">+ Upload More Photos</div>
+                            <Input style={{ visibility: 'hidden' }} accept={'image/*'} type="file" ref={refDocument} multiple onChange={(e: any) => onUpload(e.target.files)} />
+                        </Button>
                     </div>
-                  )}
+                    {_formData?.photos?.map((item: any, index: any) => item?.isActive && <div className="mt-2" key={index}>
+                        <div className="d-flex justify-content-between align-items-center" >
+                            {item?.photoUrl ?
+                                <div className="d-flex gap-2 align-items-center">
+                                    <img draggable={false} src={ROUTES.API.DOWNLOAD_FILE + `${item?.photoUrl}`} alt="icons" className='rounded fieldBorderPrimary' height={50} width={66} style={{ objectFit: 'cover' }} />
+                                    <span className="fs14 fw-bold">{item?.photoUrl?.slice(8)}</span>
+                                </div>
+                                : <div className="rounded fieldBorderPrimary fs14 alignCenter" style={{ height: "50px", width: "66px" }}>Not Available</div>}
+                            <img src={IMAGES_ICON.CloseOutlineIcon} alt="Close Icon" height="26" role="button" onClick={() => removePhotosItem(index)} />
+                        </div>
+                    </div>)}
                 </div>
-              </div>
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <div className="text-muted text-center py-4">
-          No photos uploaded for this branch yet.
+            </div> : <div className="mt-4 rounded p-0">
+                <div className="mx-auto text-center col-md-4">
+                    <div className="mt-2 fw-bold">Upload Branch Photo</div>
+                    <div className="mt-2 text-muted fs14">You can upload multiple photos, Supported format .JPG, .PNG, .JPEG (Recommended size maximum 2MB )</div>
+                </div>
+                <div className={`m-4 rounded d-flex py-2 px-3 align-items-center justify-content-center`}>
+                    <Button className="px-4 fieldBorderDashed transformNone fw400 text-dark p-4 d-flex flex-column" component="label" >
+                        <div className="fs-6 fw-bold">UPLOAD PHOTOS</div>
+                        <div className='fs16'>Select & Browse to <span className='text-nowrap text-underline text-primary'>Upload</span></div>
+                        <Input style={{ visibility: 'hidden' }} accept={'image/*'} type="file" ref={refDocument} multiple onChange={(e: any) => onUpload(e.target.files)} />
+                    </Button>
+                </div>
+            </div>}
+        {/* <hr className="mb-0" />
+        <div className="px-4 pt-4 d-flex align-items-center justify-content-end mobJustify gap-2">
+            <Button className="text-capitalize" sx={{ color: "black" }} onClick={handleClearForm}>Clear</Button>
+            <Button variant="contained" color="primary" disabled={_loading} className="px-4" onClick={handleSubmitForm}>Save</Button>
+        </div> */}
+        <div className="row pt-3">
+            <hr />
+            <div className="col-md-8 mb-2">
+                {/* <TextField sx={{ ...textFieldStyle }} className="" fullWidth placeholder="Add Notes"
+                    value={branchDetails?.branchDetails?.notes} InputProps={{ readOnly: true }} /> */}
+            </div>
+            <div className="col-md-4 mb-2">
+                <div className="d-flex align-items-center justify-content-end mobJustify gap-3">
+                    <FormControlLabel label="Active"
+                        control={<Checkbox className="text-capitalize" checked={branchDetails?.branchDetails?.isActive} />} />
+                    <Button className="px-4 text-capitalize" variant="outlined" sx={{ color: "black" }} disabled={_loading} onClick={handleBack}>Back</Button>
+                    <Button className="px-4" variant="contained" color="primary" disabled={_loading} onClick={handleSubmitForm}>Next</Button>
+                </div>
+            </div>
         </div>
-      )}
-    </div>
-  );
+    </>
 }
-

@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "WebFetch(domain:dribbble.com)",
+      "WebSearch",
+      "WebFetch(domain:muz.li)",
+      "WebFetch(domain:www.figma.com)",
+      "Bash(findstr:*)",
+      "Bash(cmd /c \"dir /s /b D:\\\\slh-dev\\\\client\\\\src\\\\pages\\\\admissions\"\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite build)",
+      "Bash(test:*)",
+      "Bash(docker ps:*)",
+      "Bash(node scripts/seed-rbac.js:*)",
+      "Bash(node -e:*)"
     ]
   }
 }

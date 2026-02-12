@@ -28,6 +28,7 @@ export default function Index({ PageAccess }: any) {
     _setFormData({ ..._formData, [key]: value });
   };
 
+
   const handleUpdateItem = (item: any) => {
     _setFormData({ ...item })
     _setEditForm(true)
@@ -79,6 +80,7 @@ export default function Index({ PageAccess }: any) {
     return valid
   }
 
+
   const handleSubmitForm = () => {
     _setLoading(true)
     if (!checkValidation()) {
@@ -117,6 +119,7 @@ export default function Index({ PageAccess }: any) {
     ]);
     return { header, body };
   };
+
 
   const exportEXCEL = () => {
     const { header, body } = getPrintTableHeadBody()
@@ -216,15 +219,12 @@ export default function Index({ PageAccess }: any) {
                       </TableCell>
                     </TableRow>
                   ))
-                ) : (
-                  !_tableLoading && (
-                    <TableRow key={0}>
-                      <TableCell align={"center"} colSpan={5}>
-                        <h3 className="text-muted">Data Not Found</h3>
-                      </TableCell>
-                    </TableRow>
-                  )
-                )}
+                ) : !_tableLoading && <TableRow key={0}>
+                  <TableCell align={"center"} colSpan={5}>
+                    <h3 className="text-muted">Data Not Found</h3>
+                  </TableCell>
+                </TableRow>
+                }
                 <SkeletonProviderTables columns={5} visible={_tableLoading} />
               </TableBody>
             </Table>
@@ -236,7 +236,7 @@ export default function Index({ PageAccess }: any) {
               <img height={24} draggable={false} src={IMAGES_ICON.BackIcon} />
               <div className="fw-bold">Back</div>
             </div>
-            <div className="bg-field-gray d-flex flex-column justify-content-between">
+            <div className="bg-field-grayd-flex flex-column justify-content-between">
               <div className="row pb-3">
                 <div className="col-md-3 my-3">
                   <div className="text-muted fs14 mb-1">Issue</div>

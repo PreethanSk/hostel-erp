@@ -26,9 +26,11 @@ export default function Login() {
     const navigate = useNavigate();
     const [alert, setAlert] = useState<AlertState>({ show: false, severity: undefined, message: '' });
     const [_loading, _setLoading] = useState<any>(false);
+    // const [{ }, dispatch]: any = useStateValue();
     const [timeRemaining, setTimeRemaining] = useState(60);
     const [resendDisabled, setResendDisabled] = useState(true);
     const [_otpSent, _setOtpSent] = useState(false)
+    // const [OTP, setOTP] = useState("");
     const [_formData, _setFormData] = useState<any>({ username: '', otp: '' });
 
     const validate: any = {
@@ -61,10 +63,12 @@ export default function Login() {
             setAlert({
                 show: true,
                 severity: 'error',
-                message: 'Please enter a valid Email',
+                message: 'Please enter the Email',
             });
             return false;
         }
+
+
         return true;
     }
 
@@ -142,8 +146,13 @@ export default function Login() {
     return <>
         <div className="text-center px-4 ">
             <div className="">
-                <img src={IMAGES_ICON.HeaderLogo} style={{ height: "45px"}} alt="Logo" />
+                <img src={IMAGES_ICON.HeaderLogo} style={{ height: "45px"}} />
             </div>
+
+            {/* <div className='mt-3 LoginHeader'><span style={{ fontWeight: "400", fontSize: "25px", color: "#F76D61" }}>HostelHost</span></div> */}
+            {/* <div className='' style={{marginTop:"-13px"}}>
+            <span className='log-subheadFront ' style={{   }}>feel like home...</span>
+            </div> */}
             <div className='mt-5'><h5 className='head'>Admin Login</h5></div>
             <form action="" method="post" onSubmit={(e) => { e.preventDefault(); _otpSent ? handleVerifyLoginOtp() : handleGenerateOtp(); }}>
                 <div className='row mt-4'>
@@ -160,11 +169,11 @@ export default function Login() {
                             value={_formData?.otp}
                             onChange={(value: any) => changeFormData('otp', value)}
                             numInputs={6}
-                            renderSeparator={<span>&nbsp;&nbsp;&nbsp;&nbsp; </span>}
+                            renderSeparator={<span>&nbsp;&nbsp;&nbsp;&nbsp; </span>}  // Space separator
                             renderInput={(props) => (
                                 <input
                                     {...props}
-                                    style={{ width: '36px', height: '45px', fontSize: '18px', textAlign: 'center', border: "1px solid #C7C3C3", borderRadius: "10px", fontWeight: "700" }}
+                                    style={{ width: '36px', height: '45px', fontSize: '18px', textAlign: 'center', border: "1px solid #C7C3C3", borderRadius: "10px", fontWeight: "700" }} // Adjust size and style
                                 />
                             )}
                         />

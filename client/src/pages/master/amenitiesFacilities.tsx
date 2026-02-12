@@ -28,6 +28,7 @@ export default function Index({ PageAccess }: any) {
     _setFormData({ ..._formData, [key]: value });
   };
 
+
   const handleUpdateItem = (item: any) => {
     _setFormData({ ...item })
     _setEditForm(true)
@@ -78,6 +79,7 @@ export default function Index({ PageAccess }: any) {
     _setValidate({ ...validation })
     return valid
   }
+
 
   const handleSubmitForm = () => {
     _setLoading(true)

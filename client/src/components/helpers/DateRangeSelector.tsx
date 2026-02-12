@@ -27,14 +27,24 @@ const DateRangeSelector = ({ handleChangeDate, className = "" }: any) => {
         _to = today.format("YYYY-MM-DD");
         break;
       case "Last Month":
-        _from = today.clone().subtract(1, "months").startOf("month").format("YYYY-MM-DD");
-        _to = today.clone().subtract(1, "months").endOf("month").format("YYYY-MM-DD");
+        _from = today
+          .clone()
+          .subtract(1, "months")
+          .startOf("month")
+          .format("YYYY-MM-DD");
+        _to = today
+          .clone()
+          .subtract(1, "months")
+          .endOf("month")
+          .format("YYYY-MM-DD");
         break;
       case "Current Month":
         _from = today.clone().startOf("month").format("YYYY-MM-DD");
         _to = today.format("YYYY-MM-DD");
+        // _to=(today.clone().endOf('month').format('YYYY-MM-DD'));
         break;
       case "Custom":
+        
         break;
       default:
         break;
@@ -53,11 +63,20 @@ const DateRangeSelector = ({ handleChangeDate, className = "" }: any) => {
           value={range}
           onChange={handleRangeChange}
           placeholder={"Select Date Range"}
-          menuItem={["Today", "Last Week", "Last Month", "Current Month", "Custom"]?.map((item: any) => (
-            <MenuItem className="px-2 fs14" key={item} value={item}>{item}</MenuItem>
+          menuItem={[
+            "Today",
+            "Last Week",
+            "Last Month",
+            "Current Month",
+            "Custom",
+          ]?.map((item: any) => (
+            <MenuItem className="px-2 fs14" key={item} value={item}>
+              {item}
+            </MenuItem>
           ))}
         />
       </div>
+
       <div className="col-md-4 my-2 px-1">
         <TextField
           className={className}
@@ -70,8 +89,16 @@ const DateRangeSelector = ({ handleChangeDate, className = "" }: any) => {
             handleChangeDate(e.target.value, toDate);
             setFromDate(e.target.value);
           }}
-          sx={{ ...textFieldStyle, "& .MuiInputBase-input": { padding: "1px 10px !important", background: className?.split(" ")?.includes("bg-white") ? "#fff" : "#F3F3F3" } }}
-          inputProps={{ readOnly: range !== "Custom" }}
+          sx={{
+            ...textFieldStyle,
+            "& .MuiInputBase-input": {
+              padding: "1px 10px !important",
+              background: className?.split(" ")?.includes("bg-white")
+                ? "#fff"
+                : "#F3F3F3",
+            },
+          }}
+          slotProps={{ input: { readOnly: range !== "Custom" } }}
           InputLabelProps={{ shrink: true }}
         />
       </div>
@@ -87,8 +114,16 @@ const DateRangeSelector = ({ handleChangeDate, className = "" }: any) => {
             handleChangeDate(fromDate, e.target.value);
             setToDate(e.target.value);
           }}
-          sx={{ ...textFieldStyle, "& .MuiInputBase-input": { padding: "1px 10px !important", background: className?.split(" ")?.includes("bg-white") ? "#fff" : "#F3F3F3" } }}
-          inputProps={{ readOnly: range !== "Custom" }}
+          sx={{
+            ...textFieldStyle,
+            "& .MuiInputBase-input": {
+              padding: "1px 10px !important",
+              background: className?.split(" ")?.includes("bg-white")
+                ? "#fff"
+                : "#F3F3F3",
+            },
+          }}
+          slotProps={{ input: { readOnly: range !== "Custom" } }}
           InputLabelProps={{ shrink: true }}
         />
       </div>

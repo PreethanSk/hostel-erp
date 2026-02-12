@@ -49,11 +49,12 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
     const handleDownloadTemplate = () => {
         let sampleData: any[] = [];
 
+        // Generate sample data based on label
         const sampleRow: any = {};
         templateArr.header.forEach((header, index) => {
             const headerLower = header.toLowerCase();
             const bodyType = templateArr.bodyType[index];
-
+            
             if (headerLower.includes('date') || headerLower.includes('dob')) {
                 sampleRow[header] = '1990-01-01';
             } else if (headerLower.includes('email')) {
@@ -105,8 +106,8 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
                 const workbook = XLSX.read(data, { type: "array", cellDates: false });
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
-
-
+                
+               
                 const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
                 const headerRow: any = {};
                 for (let col = range.s.c; col <= range.e.c; col++) {
@@ -116,73 +117,76 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
                         headerRow[cell.v] = col;
                     }
                 }
-
-
+                
+                
                 const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { raw: true, defval: null });
 
-
+                
                 const normalized = jsonData.map((row, rowIndex) => {
                     const newRow: any = {};
                     for (const key in row) {
                         const val = row[key];
                         const keyLower = key.toLowerCase();
-
+                        
+                       
                         const headerIndex = templateArr.header.findIndex((h: string) => h === key);
                         const bodyType = headerIndex >= 0 ? templateArr.bodyType[headerIndex] : null;
-
-
+                        
+                        
                         if (bodyType === 'number' || (keyLower.includes('refid') || keyLower.includes('id'))) {
-
+                           
                             const cellCol = headerRow[key] !== undefined ? headerRow[key] : headerIndex;
                             const cellAddress = XLSX.utils.encode_cell({ r: rowIndex + 1, c: cellCol });
                             const cell = worksheet[cellAddress];
-
+                            
+                            
                             let rawValue = cell && cell.v !== undefined ? cell.v : val;
-
+                            
+                            
                             if (cell && typeof cell.v === 'number') {
                                 newRow[key] = cell.v.toString();
                             } else if (rawValue !== null && rawValue !== undefined && rawValue !== '') {
-
+                               
                                 if (typeof rawValue === 'number') {
                                     newRow[key] = rawValue.toString();
                                 } else if (typeof rawValue === 'string') {
-
+                                   
                                     const datePattern = /^\d{4}-\d{2}-\d{2}/;
                                     if (datePattern.test(rawValue)) {
-
+                                       
                                         const date = moment(rawValue);
                                         if (date.isValid()) {
-
+                                          
                                             let excelSerial = 0;
                                             if (date.isBefore(moment('1900-03-01'))) {
-
+                                                
                                                 excelSerial = date.diff(moment('1899-12-30'), 'days');
                                             } else {
-
+                                                
                                                 excelSerial = date.diff(moment('1900-01-01'), 'days') + 1;
                                             }
-
-
+                                            
+                                           
                                             if (excelSerial >= 1 && excelSerial <= 100000 && date.year() >= 1899 && date.year() <= 2100) {
-
+                                               
                                                 newRow[key] = excelSerial.toString();
                                             } else {
-
+                                               
                                                 const numVal = Number(rawValue);
                                                 newRow[key] = !isNaN(numVal) ? numVal.toString() : rawValue.toString();
                                             }
                                         } else {
-
+                                           
                                             const numVal = Number(rawValue);
                                             newRow[key] = !isNaN(numVal) ? numVal.toString() : rawValue.toString();
                                         }
                                     } else {
-
+                                       
                                         const numVal = Number(rawValue);
                                         newRow[key] = !isNaN(numVal) ? numVal.toString() : rawValue.toString();
                                     }
                                 } else {
-
+                                   
                                     const numVal = Number(rawValue);
                                     newRow[key] = !isNaN(numVal) ? numVal.toString() : rawValue.toString();
                                 }
@@ -191,10 +195,10 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
                             }
                         } else if (keyLower.includes('date') || keyLower.includes('dob') || bodyType === 'date') {
                             if (val) {
-
+                               
                                 let date: moment.Moment;
                                 if (typeof val === 'number' && val > 0) {
-
+                                   
                                     date = moment('1899-12-30').add(val, 'days');
                                 } else {
                                     date = moment(val);
@@ -204,7 +208,7 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
                                 newRow[key] = val;
                             }
                         } else if (bodyType === 'boolean') {
-
+                            
                             if (typeof val === 'boolean') {
                                 newRow[key] = val;
                             } else if (typeof val === 'string') {
@@ -315,14 +319,14 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
                     _setPreviewData([]);
                     _setFile(null);
                 } else {
-
+                    
                     let warningMessage = `${result.success} records succeeded`;
                     if (result.error > 0) {
                         warningMessage += `, ${result.error} records failed`;
                     }
                     warningMessage += '.';
-
-
+                    
+                    
                     if (result.errors && result.errors.length > 0) {
                         const errorCount = Math.min(result.errors.length, 5);
                         let errorDetails = '\n\nErrors found:\n';
@@ -332,7 +336,7 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
                         if (result.errors.length > 5) {
                             errorDetails += `\n... and ${result.errors.length - 5} more errors`;
                         }
-
+                        
                         Swal.fire({
                             icon: 'warning',
                             title: 'Partial Upload Success',
@@ -351,7 +355,7 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
             } else if (result.validationResults) {
                 console.log('Validation errors detected, showing validation dialog');
             } else if (result.error > 0 || (result.errors && result.errors.length > 0)) {
-
+                
                 let errorMessage = 'All records failed to upload.';
                 if (result.errors && result.errors.length > 0) {
                     const errorCount = Math.min(result.errors.length, 10);
@@ -362,7 +366,7 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
                     if (result.errors.length > 10) {
                         errorDetails += `\n... and ${result.errors.length - 10} more errors`;
                     }
-
+                    
                     Swal.fire({
                         icon: 'error',
                         title: 'Upload Failed',
@@ -385,17 +389,17 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
             let errorTitle = 'Upload Error';
             let errorDetails = '';
 
-
+            
             if (err?.response) {
-
+                
                 const status = err.response.status;
                 const data = err.response.data;
 
                 if (status === 400) {
                     errorTitle = 'Validation Error';
                     errorMessage = data?.error || data?.msg || 'Invalid data provided. Please check your file and try again.';
-
-
+                    
+                    
                     if (data?.result?.errors && Array.isArray(data.result.errors)) {
                         const errors = data.result.errors;
                         const errorCount = Math.min(errors.length, 10);
@@ -434,7 +438,7 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
                 errorMessage = err;
             }
 
-
+           
             Swal.fire({
                 icon: 'error',
                 title: errorTitle,
@@ -542,3 +546,4 @@ export default function BulkUploadData({ label, templateArr, onBulkUpload, hideT
 
     </>
 }
+

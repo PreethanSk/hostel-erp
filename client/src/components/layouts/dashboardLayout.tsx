@@ -21,19 +21,17 @@ export default function DashboardLayout() {
             handleLogout()
             navigate(ROUTES.AUTH.LOGIN)
         }
-        if (user?.roleId) {
-            getRolePageAccessByRoleId(user.roleId)
-                .then((resp) => {
-                    if (resp?.data?.status === "success") {
-                        dispatch({
-                            type: "PAGE_ACCESS",
-                            data: resp?.data?.result
-                        });
-                    }
-                })
-                .catch((err) => console.log(err));
-        }
-    }, [user])
+        getRolePageAccessByRoleId(user?.roleId)
+            .then((resp) => {
+                if (resp?.data?.status === "success") {
+                    dispatch({
+                        type: "PAGE_ACCESS",
+                        data: resp?.data?.result
+                    });
+                }
+            })
+            .catch((err) => console.log(err))
+    }, [])
 
     return <React.Fragment>
         <DashboardNewHeader />
@@ -41,4 +39,5 @@ export default function DashboardLayout() {
             <Outlet />
         </main>
     </React.Fragment >
+
 }

@@ -1,12 +1,23 @@
-import { Link } from 'react-router-dom';
-import { ROUTES } from '../../configs/constants';
+import { useNavigate } from "react-router-dom";
+import "./style.scss";
 
-export default function NotFound() {
-    return (
-        <div className="container-fluid p-5 text-center">
-            <h4 className="fw-bold">404 — Page not found</h4>
-            <p className="text-muted">The page you are looking for does not exist.</p>
-            <Link to={ROUTES.HOME.DASHBOARD} className="btn btn-primary">Go to Dashboard</Link>
+function Index() {
+    const navigate = useNavigate()
+    return <>
+        <div className="text-center my-2">
+            <span className="bg-light border rounded p-1 fs-6" role="button" onClick={() => navigate(-1)}>Go Back</span>
         </div>
-    );
+        <div className="d-flex justify-content-center align-items-center py-5">
+            <div className="position-relative w-100">
+                <div className="notfound">
+                    <div className="notfound-404">
+                        <h3>Oops! Page not found</h3>
+                        <h1><span>4</span><span>0</span><span>4</span></h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </>
 }
+
+export default Index;

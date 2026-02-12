@@ -81,26 +81,8 @@ export default function Index({ PageAccess }: any) {
 
 
     const getPrintTableHeadBody = () => {
-        const header = [
-            "S. No",
-            "Candidate Id",
-            "Name",
-            "Mobile No",
-            "Email",
-            "Reason",
-            "Updated By",
-            "Last Update Date & Time"
-        ];
-        const body = _tableItems?.map((item: any, index: number) => [
-            index + 1,
-            item?.candidateId || '',
-            item?.name || '',
-            item?.mobileNumber || '',
-            item?.email || '',
-            item?.blackListedReason || '',
-            item?.blackListedBy || '',
-            item?.blackListedDate ? moment(item?.blackListedDate)?.format('DD-MM-YYYY hh:mm A') : ''
-        ]);
+        const header = ["S. No", "Candidate Name", "Status"];
+        const body = _tableItems?.map((item: any, index: number) => [index + 1, item?.name, item?.isActive]);
         return { header, body }
     }
 

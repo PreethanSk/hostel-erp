@@ -143,7 +143,7 @@ export default function Index({ PageAccess }: any) {
             <div className="col-md-6 my-2 d-flex justify-content-end align-items-center gap-4">
               <Button className="text-capitalize" sx={{ color: "black" }} startIcon={<img height={18} src={IMAGES_ICON.TableNewItemIcon} />} onClick={() => _setEditForm(true)}>Add New</Button>
               <CustomSearch getSearchText={(value: string) => _setSearch(value)} />
-              <img height={24} src={IMAGES_ICON.TableDownloadIcon} role="button" draggable={false} onClick={exportEXCEL} />
+              <img height={24} src={IMAGES_ICON.TableDownloadIcon} role="button" draggable="false" onClick={exportEXCEL} />
             </div>
           </div>
           <TableContainer className="tableBorder rounded">
@@ -221,7 +221,7 @@ export default function Index({ PageAccess }: any) {
               <div className="d-flex align-items-center justify-content-end mobJustify gap-2">
                 <FormControlLabel label="Active"
                   control={<Checkbox className="text-capitalize" checked={_formData?.isActive}
-                    onChange={() => changeFormData('isActive', !_formData?.isActive)} sx={{ color: "#F76D61", "&.Mui-checked": { color: "#F76D61" } }} />} />
+                    onChange={() => changeFormData('isActive', !_formData?.isActive)} />} />
                 <Button variant="contained" color="primary" disabled={_loading} className="" onClick={handleSubmitForm}>Save</Button>
                 <Button className="text-capitalize bg-white" variant="outlined" onClick={handleGoBack}>Back</Button>
               </div>

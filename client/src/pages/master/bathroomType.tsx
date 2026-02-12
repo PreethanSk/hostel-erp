@@ -175,8 +175,7 @@ export default function Index({ PageAccess }: any) {
                           value?.toString()?.toLowerCase()?.includes(lowerSearchInput)
                         );
                       })?.map((item: any, index: any) => (
-                        <TableRow key={index} className="mt-2"
-                          style={{ border: "none", borderBottom: "1px solid #D2D2D2", }}>
+                        <TableRow key={index} className="mt-2" style={{ border: "none", borderBottom: "1px solid #D2D2D2", }}>
                           <TableCell align="left">{index + 1}</TableCell>
                           <TableCell className="text-muted bolder text-nowrap">{item?.type}</TableCell>
                           <TableCell className="text-muted bolder" align="center">

@@ -17,7 +17,9 @@ export default function Index({ PageAccess }: any) {
   const [_editForm, _setEditForm] = useState(false);
   const [_formData, _setFormData] = useState<any>({ id: 0, type: "", isActive: true, notes: "" });
 
-  const validate = { type: { error: false, message: "" } };
+  const validate = {
+    type: { error: false, message: "" },
+  };
   const [_validate, _setValidate] = useState(validate);
 
   const changeFormData = (key: string, value: any) => {

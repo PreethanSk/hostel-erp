@@ -14,10 +14,10 @@ export default function AuthLayout() {
     }, [])
     return <React.Fragment>
         <div className='container-fluid ' style={{
-            backgroundImage: `url(${logimg})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            height: '100vh'
+            backgroundImage: `url(${logimg})`, // Replace with your image path
+            backgroundSize: 'cover', // Ensures the image covers the whole div
+            backgroundPosition: 'center', // Centers the image
+            height: '100vh' // Makes sure it takes the full viewport height
         }}>
             <div className="d-flex justify-content-center align-items-center  vh-100 g-0">
                 <div className="signUpcard   rounded--1 px-5 py-5">
@@ -28,4 +28,5 @@ export default function AuthLayout() {
             </div>
         </div >
     </React.Fragment >
+
 }

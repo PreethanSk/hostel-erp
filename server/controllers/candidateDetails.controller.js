@@ -677,7 +677,7 @@ const generateCandidateRegNo = async (city) => {
   } else {
     cityCode = cityCode.slice(0, 3); // ABCDE → ABC
   }
-  const prefix = `Hh${cityCode}`;
+  const prefix = `HH${cityCode}`;
 
   // Fetch the last UID starting with this prefix
   const lastRecord = await db.CandidateDetails.findOne({

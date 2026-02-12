@@ -9,6 +9,8 @@ import { KeyboardArrowRightRounded } from "@mui/icons-material";
 import Swal from "sweetalert2";
 import CustomSearch from "../../components/helpers/CustomSearch";
 
+
+
 export default function Index({ PageAccess }: any) {
   const [_tableItems, _setTableItems] = useState<any>([]);
   const [_tableLoading, _setTableLoading] = useState(true);
@@ -25,6 +27,8 @@ export default function Index({ PageAccess }: any) {
   const changeFormData = (key: string, value: any) => {
     _setFormData({ ..._formData, [key]: value });
   };
+
+  // const changeFormData = <T extends string, U>(key: T, value: U, formData: Record<T, U>) => {   _setFormData({ ...formData, [key]: value }); };
 
   const handleUpdateItem = (item: any) => {
     _setFormData({ ...item })
@@ -72,6 +76,7 @@ export default function Index({ PageAccess }: any) {
     return valid
   }
 
+
   const handleSubmitForm = () => {
     _setLoading(true)
     if (!checkValidation()) {
@@ -111,6 +116,7 @@ export default function Index({ PageAccess }: any) {
     return { header: header, body: body }
   }
 
+
   const exportEXCEL = () => {
     const { header, body } = getPrintTableHeadBody()
     getExportEXCEL({ header, body, fileName: "Amenities" })
@@ -146,7 +152,7 @@ export default function Index({ PageAccess }: any) {
           <div className="my-2 col-md-6">
             <div className="d-flex justify-content-end align-items-center gap-4 mobJustify">
               <div className="line-item">
-                <Button className="text-capitalize" sx={{ color: "black" }} startIcon={<img height={18} draggable={false} src={IMAGES_ICON.TableNewItemIcon} />} onClick={() => _setEditForm(true)}>Add New</Button>
+                {PageAccess === 'Write' && <Button className="text-capitalize" sx={{ color: "black" }} startIcon={<img height={18} draggable={false} src={IMAGES_ICON.TableNewItemIcon} />} onClick={() => _setEditForm(true)}>Add New</Button>}
               </div>
               <CustomSearch getSearchText={(value: string) => _setSearch(value)} />
               <img height={24} draggable={false} src={IMAGES_ICON.TableDownloadIcon} role="button" onClick={exportEXCEL} />
@@ -183,7 +189,7 @@ export default function Index({ PageAccess }: any) {
                         }
                       </TableCell>
                       <TableCell className="" align="center">
-                        <div className="d-flex align-items-center justify-content-center gap-3">
+                        {PageAccess === 'Write' && <div className="d-flex align-items-center justify-content-center gap-3">
                           <div className="d-flex align-items-center justify-content-center gap-1" role="button" onClick={() => handleUpdateItem(item)}>
                             <span className="">Edit</span>
                             <img height="16" src={IMAGES_ICON.EditIcon} alt="icon" draggable="false" />
@@ -192,7 +198,7 @@ export default function Index({ PageAccess }: any) {
                             <span className="">Delete</span>
                             <img height="16" src={IMAGES_ICON.DeleteIcon} alt="icon" draggable="false" />
                           </div>
-                        </div>
+                        </div>}
                       </TableCell>
                     </TableRow>
                   ))

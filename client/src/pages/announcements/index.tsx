@@ -4,47 +4,11 @@ import sort from '../../assets/images/hugeicons_sort-by-up-01.png';
 import download from '../../assets/images/solar_download-outline.png';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 import addNew from '../../assets/images/basil_add-outline.png';
-import { getExportEXCEL } from "../../services/HelperService";
 
 
 export default function Index() {
     const [list] = useState([]);
     const [editComplaint] = useState(0);
-
-    const getPrintTableHeadBody = () => {
-        const header = [
-            "S. No",
-            "Date",
-            "Branch",
-            "Title",
-            "Email",
-            "Branch (Secondary)",
-            "Room Number",
-            "Admission Date",
-            "Vacate Date",
-            "Candidate Feedback",
-            "Manager Feedback"
-        ];
-        const body = list?.map((item: any, index: number) => [
-            index + 1,
-            item?.date || '',
-            item?.branchName || '',
-            item?.title || '',
-            item?.email || '',
-            item?.branchSecondary || '',
-            item?.roomNumber || '',
-            item?.admissionDate || '',
-            item?.vacateDate || '',
-            item?.candidateFeedback || '',
-            item?.managerFeedback || '',
-        ]);
-        return { header, body };
-    };
-
-    const exportEXCEL = () => {
-        const { header, body } = getPrintTableHeadBody();
-        getExportEXCEL({ header, body, fileName: "Announcements" });
-    };
 
     return (<>
         <div className="">
@@ -63,9 +27,7 @@ export default function Index() {
                     <div className="px-2 d-flex flex-wrap align-items-center cursorPointer" style={{ color: "#000000", fontSize: "16px" }}><span>Add New</span></div>
                     <div className="px-4"><img src={search} /></div>
                     <div className="px-4"><img src={sort} /></div>
-                    <div className="px-4">
-                        <img src={download} role="button" draggable="false" onClick={exportEXCEL} />
-                    </div>
+                    <div className="px-4"><img src={download} /></div>
                 </div>
             </div>
 

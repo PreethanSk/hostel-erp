@@ -28,6 +28,7 @@ export default function Index({ PageAccess }: any) {
     _setFormData({ ..._formData, [key]: value });
   };
 
+
   const handleUpdateItem = (item: any) => {
     _setFormData({ ...item })
     _setEditForm(true)
@@ -79,6 +80,7 @@ export default function Index({ PageAccess }: any) {
     return valid
   }
 
+
   const handleSubmitForm = () => {
     _setLoading(true)
     if (!checkValidation()) {
@@ -119,6 +121,7 @@ export default function Index({ PageAccess }: any) {
     });
     return { header: header, body: body }
   }
+
 
   const exportEXCEL = () => {
     const { header, body } = getPrintTableHeadBody()
@@ -217,15 +220,12 @@ export default function Index({ PageAccess }: any) {
                       </TableCell>
                     </TableRow>
                   ))
-                ) : (
-                  !_tableLoading && (
-                    <TableRow key={0}>
-                      <TableCell align={"center"} colSpan={5}>
-                        <h3 className="text-muted">Data Not Found</h3>
-                      </TableCell>
-                    </TableRow>
-                  )
-                )}
+                ) : !_tableLoading && <TableRow key={0}>
+                  <TableCell align={"center"} colSpan={5}>
+                    <h3 className="text-muted">Data Not Found</h3>
+                  </TableCell>
+                </TableRow>
+                }
                 <SkeletonProviderTables columns={5} visible={_tableLoading} />
               </TableBody>
             </Table>

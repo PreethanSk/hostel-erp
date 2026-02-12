@@ -40,6 +40,8 @@ module.exports = (sequelize) => {
             sequelize,
             tableName: 'COMPLAINTS',
             timestamps: true,
+        },
+        {
             indexes: [
                 { name: 'idx_complaints_complaintStatus', fields: ['complaintStatus'] },
                 { name: 'idx_complaints_updatedAt', fields: ['updatedAt'] },

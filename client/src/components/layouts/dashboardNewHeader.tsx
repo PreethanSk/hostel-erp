@@ -103,6 +103,10 @@ export function DashboardNewHeader() {
                       <img height={20} src={IMAGES_ICON.VacateIcon} alt="Icon" draggable="false" loading="lazy" />
                       <div className="mt-1">Vacate</div>
                     </NavLink>
+                    {/* <NavLink to={ROUTES.HOME.ATTENDANCE} className="mx-2 nav-link">
+                      <img height={20} src={IMAGES_ICON.AttendanceIcon} alt="Icon" draggable="false" loading="lazy" />
+                      <div className="mt-1">Attendance</div>
+                    </NavLink> */}
                     <NavLink to={ROUTES.HOME.BRANCH} className="mx-2 nav-link">
                       <img height={20} src={IMAGES_ICON.BranchIcon} alt="Icon" draggable="false" loading="lazy" />
                       <div className="mt-1">Branch</div>
@@ -115,6 +119,10 @@ export function DashboardNewHeader() {
                       <img height={20} src={IMAGES_ICON.FeedbackIcon} alt="Icon" draggable="false" loading="lazy" />
                       <div className="mt-1">Feedback</div>
                     </NavLink>
+                    {/* <NavLink to={ROUTES.HOME.ROOMS} className="mx-2 nav-link" >
+                      <img height={20} src={IMAGES_ICON.RoomsIcon} alt="Icon" draggable="false" loading="lazy" />
+                      <div className="mt-1">Rooms</div>
+                    </NavLink> */}
                     <div className="mx-2 position-relative">
                       <div className={`nav-link ${isMasterActive ? "active" : ""}`} role="button" onClick={() => _setMasterPopup(true)} >
                         <img height={20} src={IMAGES_ICON.MasterIcon} alt="Icon" draggable="false" loading="lazy" />
@@ -247,7 +255,7 @@ export function DashboardNewHeader() {
                               { label: "Admission Confirmation", path: ROUTES.HOME.ADMISSION.CONFIRMATION },
                               { label: "Admission Transfer", path: ROUTES.HOME.ADMISSION.TRANSFER },
                               { label: "Candidate Payments", path: ROUTES.HOME.ADMISSION.PAYMENTS },
-                            ]?.map((mItem: any) => <div key={mItem?.label} className="text-truncate px-2 py-1 subMenu" role="button"
+                            ]?.map((mItem: any) => <div className="text-truncate px-2 py-1 subMenu" role="button"
                               onClick={() => { _setDrawer(false); _setAdmissionMobPopup(false); navigate(mItem?.path); }}>{mItem?.label}</div>
                             )}
                           </div>
@@ -329,7 +337,7 @@ export function DashboardNewHeader() {
                               { label: "Role", path: ROUTES.HOME.USER.ROLE },
                               { label: "User List", path: ROUTES.HOME.USER.LIST },
                               { label: "Service Provider", path: ROUTES.HOME.USER.SERVICE_PROVIDER },
-                            ]?.map((mItem: any) => <div key={mItem?.label} className="text-truncate px-2 py-1 subMenu" role="button"
+                            ]?.map((mItem: any) => <div className="text-truncate px-2 py-1 subMenu" role="button"
                               onClick={() => { _setDrawer(false); _setUserMobPopup(false); navigate(mItem?.path); }}>{mItem?.label}</div>
                             )}
                           </div>
@@ -350,7 +358,9 @@ export function DashboardNewHeader() {
           </div>
           <div className="text-center">
             <div className="">
+              {/* <img className='' height={400} src={IMAGES_ICON.FooterImage} alt="logo" draggable={false} /> */}
             </div>
+            {/* <div className="my-2">© {new Date().getFullYear()} All rights reserved</div> */}
           </div>
         </div>
       </Drawer>

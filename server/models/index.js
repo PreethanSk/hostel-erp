@@ -1,14 +1,14 @@
 "use strict";
 
+const { forever } = require("request");
 const { Sequelize } = require("sequelize");
 const db = {};
 const dbConfig = global.config.database;
-const api = dbConfig.serviceApi || dbConfig.serviceAPI;
 
 const sequelize = new Sequelize(
-  api.db,
-  api.name,
-  api.password,
+  dbConfig.hh.db,
+  dbConfig.hh.name,
+  dbConfig.hh.password,
   {
     host: dbConfig.host,
     dialect: dbConfig.dialect,
@@ -16,6 +16,7 @@ const sequelize = new Sequelize(
     logging: dbConfig.logging,
     dialectOptions: {
       connectTimeout: 60000,
+      // useUTC: true,
     },
     timezone: "+00:00",
     pool: {
@@ -72,11 +73,12 @@ db.AttendanceDetails = require("./attendanceDetails.model")(sequelize);
 db.MasterIssuesSubCategories = require("./masterIssueSubCategories.model")(sequelize);
 db.approvedNotification = require("./approvedNotification.model")(sequelize);
 
+// Service provider
 db.ServiceProvider = require("./serviceProviders.model")(sequelize);
 db.ServiceProviderCategory = require("./serviceProviderCategory.model")(sequelize);
 db.ServiceProviderOtp = require("./serviceProvidersOtp.model")(sequelize);
 
-// ****** Relations *******
+// ****** Relations of tables *******
 db.MasterAmenitiesCategories.hasMany(db.MasterAmenitiesSubCategories, { foreignKey: "categoryId", as: "MasterAmenitiesCategories", });
 db.MasterAmenitiesSubCategories.belongsTo(db.MasterAmenitiesCategories, { foreignKey: "categoryId", as: "MasterAmenitiesCategories", });
 
@@ -89,6 +91,7 @@ db.BranchDetails.hasMany(db.Users, { foreignKey: "branchId", as: "Users", });
 db.Users.belongsTo(db.BranchDetails, { foreignKey: "branchId", as: "BranchDetails", });
 
 db.MasterUserRoles.hasMany(db.RolePageAccess, { foreignKey: "roleId", as: "RolePageAccess", });
+// db.MasterUserRoles.hasMany(db.RolePageAccess, { foreignKey: "roleId", as: "MasterUserRoles", });
 db.RolePageAccess.belongsTo(db.MasterUserRoles, { foreignKey: "roleId", as: "MasterUserRoles", });
 
 db.MasterAmenitiesSubCategories.hasMany(db.MasterAmenitiesFacilities, { foreignKey: "subCategoryId", as: "MasterAmenitiesSubCategories", });
@@ -97,15 +100,29 @@ db.MasterAmenitiesFacilities.belongsTo(db.MasterAmenitiesSubCategories, { foreig
 db.MasterIssueCategories.hasMany(db.MasterIssueSubCategories, { foreignKey: "issueId", as: "MasterIssueCategories", });
 db.MasterIssueSubCategories.belongsTo(db.MasterIssueCategories, { foreignKey: "issueId", as: "MasterIssueCategories", });
 
+
+
 db.MasterPageList.hasMany(db.RolePageAccess, { foreignKey: "pageId", as: "MasterPageList", });
 db.RolePageAccess.belongsTo(db.MasterPageList, { foreignKey: "pageId", as: "MasterPageList", });
 
+// *****
+// db.CandidateDetails.hasMany(db.CandidateDocumentDetails, {  foreignKey: "candidateRefId",  as: "CandidateDocumentDetails",});
+// db.CandidateDocumentDetails.belongsTo(db.CandidateDetails, {  foreignKey: "candidateRefId",  as: "CandidateDocumentDetails",});
+
+// db.CandidateDetails.hasMany(db.CandidatePurposeOfStay, {  foreignKey: "candidateRefId",  as: "CandidatePurposeOfStay",});
+// db.CandidatePurposeOfStay.belongsTo(db.CandidateDetails, {  foreignKey: "candidateRefId",  as: "CandidatePurposeOfStay",});
+
+// *****
 db.CandidateDetails.hasMany(db.CandidateOtherDetails, { foreignKey: "candidateRefId", as: "CandidateOtherDetails", });
 db.CandidateOtherDetails.belongsTo(db.CandidateDetails, { foreignKey: "candidateRefId", as: "CandidateOtherDetails", });
+
+//  db.CandidateDetails.hasMany(db.CandidateContactPersonDetails, {   foreignKey: "candidateRefId",   as: "CandidateContactPersonDetails", });
+//  db.CandidateContactPersonDetails.belongsTo(db.CandidateDetails, {   foreignKey: "candidateRefId",   as: "CandidateContactPersonDetails", });
 
 db.BranchDetails.hasMany(db.BranchPhotos, { foreignKey: "branchId", as: "BranchPhotos", });
 db.BranchPhotos.belongsTo(db.BranchDetails, { foreignKey: "branchId", as: "BranchPhotos", });
 
+// Rooms Table
 db.BranchDetails.hasMany(db.Rooms, { foreignKey: "branchId", as: "branchRooms" });
 db.Rooms.belongsTo(db.BranchDetails, { foreignKey: "branchId", as: "BranchDetails" });
 
@@ -115,6 +132,7 @@ db.Rooms.belongsTo(db.MasterRoomTypes, { foreignKey: "roomTypeId", as: "MasterRo
 db.MasterSharingTypes.hasMany(db.Rooms, { foreignKey: "sharingTypeId", as: "sharingTypeRooms", });
 db.Rooms.belongsTo(db.MasterSharingTypes, { foreignKey: "sharingTypeId", as: "MasterSharingTypes", });
 
+// Cots Table
 db.Rooms.hasMany(db.Cots, { foreignKey: "roomId", as: "cotsRoom" });
 db.Cots.belongsTo(db.Rooms, { foreignKey: "roomId", as: "Rooms" });
 db.MasterCotTypes.hasMany(db.Cots, { foreignKey: "cotTypeId", as: "cotsType" });
@@ -122,6 +140,7 @@ db.Cots.belongsTo(db.MasterCotTypes, { foreignKey: "cotTypeId", as: "MasterCotTy
 
 db.CandidateDetails.hasMany(db.AttendanceDetails, { foreignKey: "candidateId", as: "candidateAttendance", });
 
+// Admission Table
 db.Rooms.hasMany(db.CandidateAdmission, { foreignKey: "roomRefId", as: "CandidateAdmissionsInRoom" });
 db.CandidateAdmission.belongsTo(db.Rooms, { foreignKey: "roomRefId", as: "RoomDetails" });
 db.Cots.hasMany(db.CandidateAdmission, { foreignKey: "cotRefId", as: "CandidateAdmissionsInCot" });
@@ -131,6 +150,7 @@ db.CandidateAdmission.belongsTo(db.BranchDetails, { foreignKey: "branchRefId", a
 db.CandidateDetails.hasMany(db.CandidateAdmission, { foreignKey: "candidateRefId", as: "CandidateAdmissionInCandidateDetails" });
 db.CandidateAdmission.belongsTo(db.CandidateDetails, { foreignKey: "candidateRefId", as: "CandidateAdmissionName" });
 
+// Feedback
 db.BranchDetails.hasMany(db.Feedback, { foreignKey: "branchRefId", as: "FeedbackCandidateBranch" });
 db.Feedback.belongsTo(db.BranchDetails, { foreignKey: "branchRefId", as: "FeedbackCandidateBranchDetails" });
 db.CandidateDetails.hasMany(db.Feedback, { foreignKey: "candidateRefId", as: "FeedbackCandidateDetails" });
@@ -140,6 +160,7 @@ db.Feedback.belongsTo(db.CandidateAdmission, { foreignKey: "admissionRefId", as:
 
 db.AttendanceDetails.belongsTo(db.CandidateDetails, { foreignKey: "candidateId", as: "candidate", });
 
+// Complaints
 db.BranchDetails.hasMany(db.Complaints, { foreignKey: "branchRefId", as: "branchComplaints", });
 db.Complaints.belongsTo(db.BranchDetails, { foreignKey: "branchRefId", as: "BranchDetails", });
 
@@ -169,15 +190,18 @@ db.Complaints.belongsTo(db.ServiceProviderCategory, { foreignKey: "serviceCatego
 db.ServiceProvider.hasMany(db.Complaints, { foreignKey: "serviceProviderId", as: "serviceProviderComplaints", });
 db.ServiceProviderCategory.hasMany(db.Complaints, { foreignKey: "serviceCategoryId", as: "serviceCategoryComplaints", });
 
+// Service Provider OTP
 db.ServiceProvider.hasMany(db.ServiceProviderOtp, { foreignKey: "serviceProviderId", as: "serviceProviderOtps", });
 db.ServiceProviderOtp.belongsTo(db.ServiceProvider, { foreignKey: "serviceProviderId", as: "serviceProvider", });
 
+// Vacate 
 db.CandidateDetails.hasMany(db.Vacate, { foreignKey: "candidateRefId", as: "CandidateDetails", });
 db.Vacate.belongsTo(db.CandidateDetails, { foreignKey: "candidateRefId", as: "VacateCandidateDetails", });
 db.BranchDetails.hasMany(db.Vacate, { foreignKey: "branchRefId", as: "BranchDetails", });
 db.Vacate.belongsTo(db.BranchDetails, { foreignKey: "branchRefId", as: "VacateBranchDetails", });
 db.CandidateAdmission.hasMany(db.Vacate, { foreignKey: "admissionRefId", as: "CandidateAdmission", });
 db.Vacate.belongsTo(db.CandidateAdmission, { foreignKey: "admissionRefId", as: "VacateCandidateAdmission", });
+
 
 Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {
@@ -187,5 +211,8 @@ Object.keys(db).forEach((modelName) => {
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
+
+
+
 
 module.exports = db;

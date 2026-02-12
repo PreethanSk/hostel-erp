@@ -13,19 +13,18 @@ const initMailer = () => {
   }
 
   if (!transporter) {
-    console.log("Transporter setup done.");
+    console.log("Transporter setup done.")
     const dbConfig = global.config.email;
-    const pass = (dbConfig.pass || "").trim();
     transporter = nodemailer.createTransport({
       host: dbConfig.host,
-      port: parseInt(dbConfig.port, 10),
-      secure: parseInt(dbConfig.port, 10) === 465,
-      pool: true,
-      maxConnections: 5,
-      maxMessages: 100,
+      port: parseInt(dbConfig.port),
+      secure: parseInt(dbConfig.port) === 465 ? true : false,
+      pool: true,              // ✅ use connection pooling
+      maxConnections: 5,       // adjust as needed
+      maxMessages: 100,        // reuse connections
       auth: {
         user: dbConfig.user,
-        pass: pass,
+        pass: dbConfig.pass,
       },
       tls: { rejectUnauthorized: false },
     });

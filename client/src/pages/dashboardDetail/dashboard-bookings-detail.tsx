@@ -1,220 +1,229 @@
+import {
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  TextField,
+  TableContainer,
+} from "@mui/material";
+import { IMAGES_ICON } from "../../assets/images/exportImages";
+import {
+  customTableTemplate,
+  customTableHeader,
+  getExportEXCEL,
+} from "../../services/HelperService";
+import CustomDialogue from "../../components/helpers/CustomDialogue";
 import { useEffect, useState } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, Tab } from "@mui/material";
-import { KeyboardArrowRightRounded } from "@mui/icons-material";
-import { getBranchGridList, getDashboardBookingsDetail } from "../../models";
-import CustomSelect from "../../components/helpers/CustomSelect";
-import DateRangeSelector from "../../components/helpers/DateRangeSelector";
-import CustomSearch from "../../components/helpers/CustomSearch";
-import { CustomAlert, customTableHeader, customTableTemplate } from "../../services/HelperService";
+import { getDashboardBookingsDetail } from "../../models";
 import { SkeletonProviderTables } from "../../providers/SkeletonProvider";
+import moment from "moment";
 
-type BranchItem = {
-    id: number;
-    branchName: string;
-};
-
-type BookingTab = "totalBooking" | "confirmBooking" | "pendingBooking" | "cancelled" | "vacant";
-
-export default function DashboardBookingsDetail() {
-    const [_activeTab, _setActiveTab] = useState<BookingTab>("totalBooking");
-    const [_tableItems, _setTableItems] = useState<any[]>([]);
-    const [_tableLoading, _setTableLoading] = useState(true);
-    const [_search, _setSearch] = useState("");
-    const [_branchList, _setBranchList] = useState<BranchItem[]>([]);
-    const [_branchId, _setBranchId] = useState<string>("");
-    const [_fromDate, _setFromDate] = useState<string>("");
-    const [_toDate, _setToDate] = useState<string>("");
-
-    const loadBranches = () => {
-        getBranchGridList(1, 0)
-            .then((resp: any) => {
-                if (resp?.data?.status === "success") {
-                    _setBranchList(resp?.data?.result?.results || []);
-                }
-            })
-            .catch(console.log);
-    };
-
-    const loadBookingsDetail = () => {
-        _setTableLoading(true);
-        const params = new URLSearchParams();
-        if (_fromDate) params.append("from", _fromDate);
-        if (_toDate) params.append("to", _toDate);
-        if (_branchId) params.append("branchId", _branchId);
-        const query = params.toString();
-        const queryStr = query ? `?${query}` : "";
-
-        getDashboardBookingsDetail(queryStr)
-            .then((resp: any) => {
-                if (resp?.data?.status === "success") {
-                    const grouped = resp?.data?.result || {};
-                    _setTableItems(grouped[_activeTab] || []);
-                } else {
-                    CustomAlert("warning", resp?.data?.error || "Failed to fetch bookings detail");
-                }
-            })
-            .catch((err: any) => {
-                console.log(err);
-                CustomAlert("warning", "Unable to load bookings detail");
-            })
-            .finally(() => _setTableLoading(false));
-    };
-
-    useEffect(() => {
-        loadBranches();
-    }, []);
-
-    useEffect(() => {
-        loadBookingsDetail();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [_activeTab, _branchId, _fromDate, _toDate]);
-
-    const handleTabChange = (_e: any, value: BookingTab) => {
-        _setActiveTab(value);
-    };
-
-    const handleChangeDate = (from: string, to: string) => {
-        _setFromDate(from);
-        _setToDate(to);
-    };
-
-    const filteredItems = _tableItems?.filter((content: any) => {
-        const lowerSearchInput = _search?.toLowerCase()?.trim();
-        if (!lowerSearchInput) return true;
-        return Object?.values(content || {})?.some((value: any) =>
-            value?.toString()?.toLowerCase()?.includes(lowerSearchInput)
-        );
-    });
-
-    return (
-        <div className="container-fluid py-3">
-            <div className="container">
-                <div className="row justify-content-between align-items-center py-3">
-                    <div className="col-md-6 my-2">
-                        <div className="d-flex align-items-center gap-2 mobJustify">
-                            <span className="text-dark fw-bold">Dashboard </span>
-                            <span className="text-dark">
-                                <KeyboardArrowRightRounded />
-                            </span>
-                            <span className="text-muted">Bookings Detail</span>
-                        </div>
-                    </div>
-                    <div className="my-2 col-md-6">
-                        <div className="d-flex justify-content-end align-items-center gap-4 mobJustify">
-                            <CustomSearch getSearchText={(value: string) => _setSearch(value)} />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="row mb-3">
-                    <div className="col-lg-4 mb-2">
-                        <Tabs
-                            value={_activeTab}
-                            onChange={handleTabChange}
-                            variant="scrollable"
-                            allowScrollButtonsMobile
-                        >
-                            <Tab value="totalBooking" label="All Bookings" />
-                            <Tab value="confirmBooking" label="Confirmed" />
-                            <Tab value="pendingBooking" label="Pending" />
-                            <Tab value="cancelled" label="Cancelled / Rejected" />
-                            <Tab value="vacant" label="Vacant Mismatch" />
-                        </Tabs>
-                    </div>
-                    <div className="col-lg-8 mb-2">
-                        <div className="row align-items-center">
-                            <div className="col-md-4 my-2 px-1">
-                                <CustomSelect
-                                    className="bg-white"
-                                    placeholder="Select Branch"
-                                    value={_branchId}
-                                    onChange={(e: any) => _setBranchId(e?.target?.value || "")}
-                                    padding={"0px 10px"}
-                                    menuItem={[
-                                        <option key="All" value="">
-                                            All Branches
-                                        </option>,
-                                        ...(_branchList || [])?.map((item: BranchItem) => (
-                                            <option key={item?.id} value={item?.id}>
-                                                {item?.branchName}
-                                            </option>
-                                        )),
-                                    ]}
-                                />
-                            </div>
-                            <div className="col-md-8 my-2 px-1">
-                                <DateRangeSelector
-                                    className="bg-white"
-                                    handleChangeDate={handleChangeDate}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <TableContainer className="tableBorder rounded">
-                    <Table sx={{ ...customTableTemplate }}>
-                        <TableHead>
-                            <TableRow sx={{ ...customTableHeader }}>
-                                <TableCell className="fw-bold">S.No</TableCell>
-                                <TableCell className="fw-bold">Candidate</TableCell>
-                                <TableCell className="fw-bold">Contact</TableCell>
-                                <TableCell className="fw-bold">Branch / Room / Cot</TableCell>
-                                <TableCell className="fw-bold">Room Rent</TableCell>
-                                <TableCell className="fw-bold">Admission Status</TableCell>
-                                <TableCell className="fw-bold">Payment Status</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {filteredItems?.length > 0 ? (
-                                filteredItems?.map((item: any, index: number) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{index + 1}</TableCell>
-                                        <TableCell className="text-nowrap">
-                                            <div className="fw-bold">
-                                                {item?.candidateName || "-"}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-nowrap">
-                                            <div>{item?.mobileNumber || "-"}</div>
-                                            {item?.email && (
-                                                <div className="fs12 text-muted">{item?.email}</div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-nowrap">
-                                            <div className="fw-bold">
-                                                {item?.branchName || "Branch -"}
-                                            </div>
-                                            <div className="fs12 text-muted">
-                                                Room {item?.roomNumber || "-"} / Cot {item?.cotNumber || "-"}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-nowrap">
-                                            {item?.roomRent || 0}
-                                        </TableCell>
-                                        <TableCell className="text-nowrap">
-                                            <span className="fs12 statusBgActive text-success rounded--50 px-3 py-1">
-                                                {item?.status || "-"}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-nowrap">
-                                            {item?.paymentStatus || "-"}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : !_tableLoading ? (
-                                <TableRow>
-                                    <TableCell className="fs-3 text-muted" align="center" colSpan={7}>
-                                        Data Not Found
-                                    </TableCell>
-                                </TableRow>
-                            ) : null}
-                            <SkeletonProviderTables columns={7} visible={_tableLoading} />
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </div>
-        </div>
-    );
+interface DashboardBookingsDetailModalProps {
+  open: boolean;
+  onClose: () => void;
+  fromDate: string;
+  toDate: string;
+  branchId: string;
+  type?: string;
+  detailedData?: any;
 }
 
+interface BookingDetail {
+  candidateId: number;
+  candidateName: string;
+  mobileNumber?: string;
+  email?: string;
+  branchName?: string;
+  roomNumber?: string;
+  cotNumber?: string;
+  roomRent?: string;
+  rejectedOrCancelledDate?: string;
+  paymentStatus?: string;
+  status?: string;
+}
+
+export default function DashboardBookingsDetailModal({
+  open,
+  onClose,
+  fromDate,
+  toDate,
+  branchId,
+  type = "confirmBooking",
+  detailedData,
+}: DashboardBookingsDetailModalProps) {
+  const [data, setData] = useState<BookingDetail[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [_search, _setSearch] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    if (detailedData) {
+      setData(detailedData?.[type] || []);
+      return;
+    }
+    setLoading(true);
+    const queryStr = `?branchId=${branchId}&from=${fromDate}&to=${toDate}`;
+    getDashboardBookingsDetail(queryStr).then((resp: any) => {
+      if (resp?.data?.status === "success") {
+        setData(resp.data.result?.[type] || []);
+      } else {
+        setData([]);
+      }
+      setLoading(false);
+    });
+  }, [open, fromDate, toDate, branchId, type, detailedData]);
+
+  const getPrintTableHeadBody = () => {
+    const header = [
+      "S. No",
+      "Candidate ID",
+      "Candidate Name",
+      "Mobile No",
+      "Email",
+      "Branch",
+      "Room",
+      "Cot",
+      "Room Rent",
+      "Payment Status",
+      "Booking Status",
+    ];
+    if (type === "totalBooking" || type === "pendingBooking" || type === "confirmBooking") {
+      header.push("Payment Status");
+    }
+    if (type === "cancelled") header.push("Rejected/Cancelled Date");
+    const body = data?.map((item: BookingDetail, index: number) => {
+      const row = [
+        index + 1,
+        item.candidateId || "-",
+        item.candidateName || "-",
+        item.mobileNumber || "-",
+        item.email || "-",
+        item.branchName || "-",
+        item.roomNumber || "-",
+        item.cotNumber || "-",
+        item.roomRent || "-",
+        item.paymentStatus || "-",
+        item.status || "-",
+      ];
+      if (type === "totalBooking" || type === "pendingBooking" || type === "confirmBooking") {
+        row.push(item.paymentStatus || "-");
+      }
+      if (type === "cancelled") {
+        row.push(
+          item.rejectedOrCancelledDate && moment(item.rejectedOrCancelledDate).isValid()
+            ? moment(item.rejectedOrCancelledDate).format("DD-MMM-YYYY")
+            : "-"
+        );
+      }
+      return row;
+    });
+    return { header, body };
+  };
+
+  const exportEXCEL = () => {
+    const { header, body } = getPrintTableHeadBody();
+    getExportEXCEL({ header, body, fileName: "Bookings Details" });
+  };
+
+  let title = "";
+  if (type === "totalBooking") title = "Total Booking";
+  if (type === "cancelled") title = "Cancelled";
+  if (type === "pendingBooking") title = "Pending";
+  if (type === "confirmBooking") title = "Confirm";
+
+  if (!open) return null;
+
+  return (
+    <CustomDialogue
+      displaySize={"lg"}
+      title={title + " Details"}
+      dialogueFlag={true}
+      onCloseClick={onClose}
+      mainContent={
+        <div className="my-2">
+          <TableContainer className="tableBorder rounded">
+            <Table size="small" sx={{ ...customTableTemplate }}>
+              <TableHead>
+                <TableRow sx={{ ...customTableHeader }}>
+                  <TableCell className="fw-bold text-nowrap">S.No</TableCell>
+                  <TableCell className="fw-bold text-nowrap">Candidate ID</TableCell>
+                  <TableCell className="fw-bold text-nowrap">Candidate Name</TableCell>
+                  <TableCell className="fw-bold text-nowrap">Mobile No</TableCell>
+                  <TableCell className="fw-bold text-nowrap">Email</TableCell>
+                  <TableCell className="fw-bold text-nowrap">Branch</TableCell>
+                  <TableCell className="fw-bold text-nowrap">Room</TableCell>
+                  <TableCell className="fw-bold text-nowrap">Cot</TableCell>
+                  <TableCell className="fw-bold text-nowrap">Room Rent</TableCell>
+                  <TableCell className="fw-bold text-nowrap">Payment Status</TableCell>
+                  <TableCell className="fw-bold text-nowrap">Booking Status</TableCell>
+                  {type === "cancelled" && <TableCell className="fw-bold"> Rejected/Cancelled Date</TableCell>}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {data?.length > 0
+                  ? data
+                    .filter((content: BookingDetail) => {
+                      const lowerSearchInput = _search?.toLowerCase()?.trim();
+                      return (
+                        lowerSearchInput === "" ||
+                        Object?.values(content)?.some((value) => value?.toString()?.toLowerCase()?.includes(lowerSearchInput))
+                      );
+                    })
+                    .map((row, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>{idx + 1}</TableCell>
+                        <TableCell>{row?.candidateId || "-"}</TableCell>
+                        <TableCell>{row?.candidateName || "-"}</TableCell>
+                        <TableCell>{row?.mobileNumber || "-"}</TableCell>
+                        <TableCell>{row?.email || "-"}</TableCell>
+                        <TableCell>{row?.branchName || "-"}</TableCell>
+                        <TableCell>{row?.roomNumber || "-"}</TableCell>
+                        <TableCell>{row?.cotNumber || "-"}</TableCell>
+                        <TableCell>{row?.roomRent || "-"}</TableCell>
+                        <TableCell>{row?.paymentStatus || "Unpaid"}</TableCell>
+                        <TableCell>{row?.status || "-"}</TableCell>
+                        {(type === "totalBooking" || type === "pendingBooking" || type === "confirmBooking") && (
+                          <TableCell>{row?.paymentStatus || "-"}</TableCell>
+                        )}
+                        {type === "cancelled" && (
+                          <TableCell>
+                            {row?.rejectedOrCancelledDate && moment(row.rejectedOrCancelledDate).isValid()
+                              ? moment(row.rejectedOrCancelledDate).format("DD-MMM-YYYY")
+                              : "-"}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))
+                  : !loading && (
+                    <TableRow>
+                      <TableCell className="fs-3 text-muted" align="center" colSpan={type === "cancelled" ? 12 : 11}>Data Not Found</TableCell>
+                    </TableRow>
+                  )}
+                <SkeletonProviderTables columns={type === "cancelled" ? 12 : 11} visible={loading} />
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </div>
+      }
+      actionContent={
+        <div className="flex-grow-1">
+          <hr className="mt-0" />
+          <div className="my-2 d-flex justify-content-center align-items-center gap-4">
+            <div className="d-flex align-items-center">
+              <TextField size="small" fullWidth className="bg-white py-0" value={_search} placeholder="Search"
+                onChange={(e) => _setSearch(e.target.value)}
+                InputProps={{
+                  endAdornment: (
+                    <img height={18} src={IMAGES_ICON.TableSearchIcon} role="button" draggable="false" />
+                  ),
+                }}
+              />
+            </div>
+            <img height={24} src={IMAGES_ICON.TableDownloadIcon} role="button" draggable="false" onClick={exportEXCEL} />
+          </div>
+        </div>
+      }
+    />
+  );
+}

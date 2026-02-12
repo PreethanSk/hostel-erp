@@ -6,8 +6,8 @@ const { formatResponse } = require("../helpers/utility.helper");
 const { Op, col } = require("sequelize");
 const { sendUserOTP } = require("../helpers/otp.helper");
 const db = require('../models');
-const countryModel = db.MasterCountry;
 const { getPagination, getPagingData } = require('../helpers/pagination.helper');
+// const client = require('../config/redisConnect');
 const Users = db.Users;
 const UserSessions = db.UserSessions;
 
@@ -36,25 +36,9 @@ exports.userLogin = async (req, res) => {
 
         let emailAndMobileVerify = true;
         let message = 'OTP has been sent to registered mobile number';
-        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.body.keyUser);
-        const isMobile = /^\d{6,15}$/.test(req.body.keyUser);
-        let loginType = '';
-        if (isEmail) {
-            loginType = 'Email';
-        } else if (isMobile) {
-            loginType = 'Mobile';
-        }
         if (userData.emailVerifiedAt === null || userData.mobileVerifiedAt === null) {
             emailAndMobileVerify = false;
-            await sendUserOTP(
-                userData.id,
-                userData.mobileNumber,
-                userData.emailAddress,
-                null,
-                'LoginEmailMobileVerifyOTP',
-                `Your verification OTP is sent to registered ${loginType}:`,
-                loginType
-            );
+            await sendUserOTP(userData.id, userData.mobileNumber, userData.emailAddress, userData.fullName, 'LoginEmailMobileVerifyOTP');
             message = 'OTP has been sent to registered mobile number and Email ID';
             const response = {
                 uniqueId: userData.uniqueId,
@@ -73,7 +57,7 @@ exports.userLogin = async (req, res) => {
                     },
                 }
             )
-            // await sendUserOTP(userData.id, userData.countryId, userData.mobileNumber, userData.emailAddress, userData.fullName, 'loginOTP', true, 'Your Hostel Host ERP login verification OTP is:');
+            // await sendUserOTP(userData.id, userData.countryId, userData.mobileNumber, userData.emailAddress, userData.fullName, 'loginOTP', true, 'Your HostelHost login verification OTP is:');
             // message = 'OTP has been sent to registered mobile number';
             const secret = userData.uniqueId + '!@#$%0o%988';
             const accessKey = userData.uniqueId + '-' + uuidv4({}, null, 0);
@@ -107,6 +91,8 @@ exports.userLogin = async (req, res) => {
                 emailAndMobileVerify: true,
                 profilePic: global.config.serverHost + '/api/user/images/profile-pic.png'
             };
+
+            // await client.set(newSession.accessToken, JSON.stringify(newSession));
             return res.cookie('accessKey', newSession.accessKey, { httpOnly: true }).json(await formatResponse.success(response));
         }
         // const response = {
@@ -124,6 +110,7 @@ exports.userLogin = async (req, res) => {
 exports.userLogout = async (req, res) => {
     try {
         await UserSessions.update({ logoutAt: moment() }, { where: { userId: req.userId } })
+        // await client.del(req.bearerToken)
         //if (sessionExpired) 
         return res.status(200).json(await formatResponse.success('logout'))
 

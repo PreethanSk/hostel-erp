@@ -1,11 +1,9 @@
 const baseRoute = "/";
 
-export let baseApi = "http://localhost:14321/api/";
-if (process.env.NODE_ENV === "production") {
-  baseApi = "https://api.yourdomain.com/api/";
-}
+export let baseApi = "http://localhost:3000/api/";
 
 export const ROUTES = {
+  // HOME: baseRoute,
   LOGIN: baseRoute + "login",
   LOGOUT: baseRoute + "logout",
   PROFILE: baseRoute + "profile",
@@ -16,12 +14,6 @@ export const ROUTES = {
   HOME: {
     HOME: baseRoute + "",
     DASHBOARD: baseRoute + "dashboard",
-    DASHBOARD_DETAIL: {
-      COTS: baseRoute + "dashboard/cots-detail",
-      COMPLAINTS: baseRoute + "dashboard/complaints-detail",
-      PAYMENTS: baseRoute + "dashboard/payments-detail",
-      BOOKINGS: baseRoute + "dashboard/bookings-detail",
-    },
     COMPLAINTS: baseRoute + "complaints",
     ADMISSION: {
       HOME: "admission",
@@ -70,6 +62,7 @@ export const ROUTES = {
     GET_LOGIN_OTP: baseApi + "user-send-otp",
     VERIFY_LOGIN_OTP: baseApi + "user-verify-otp",
 
+    // Dashboard's
     GET_DASHBOARD_COTS: baseApi + "get-dashboard-cots",
     GET_DASHBOARD_COMPLAINTS: baseApi + "get-dashboard-complaints",
     GET_DASHBOARD_PAYMENTS: baseApi + "get-dashboard-payments",
@@ -79,6 +72,7 @@ export const ROUTES = {
     GET_DASHBOARD_COTS_DETAIL: baseApi + "get-dashboard-cots-detail",
     GET_DASHBOARD_COMPLAINTS_DETAIL: baseApi + "get-dashboard-complaints-detail",
 
+    // Master's
     GET_MASTER_AMENITIES_CATEGORY: baseApi + "get-master-amenities-category",
     GET_MASTER_AMENITIES_SUB_CATEGORY: baseApi + "get-master-amenities-sub-category",
     GET_MASTER_AMENITIES_SUB_FACILITIES: baseApi + "get-master-amenities-facilities",
@@ -113,8 +107,8 @@ export const ROUTES = {
     DELETE_MASTER_ISSUE_SUB_CATEGORY: baseApi + "delete-master-issue-sub-category",
     DELETE_MASTER_PAGE_LIST: baseApi + "delete-master-page-list",
     DELETE_MASTER_USER_ROLE: baseApi + "delete-master-user-role",
-    DELETE_MASTER_SERVICE_PROVIDER_CATEGORY: baseApi + "delete-master-service-provider-category",
 
+    // Branch Details
     GET_BRANCH_CANDIDATE_BY_SEARCH: baseApi + "get-branch-candidate-by-search",
     GET_BRANCH_DETAIL_BY_ID: baseApi + "get-branch-detail-by-id",
     GET_BRANCH_GRID_LIST: baseApi + "get-branch-grid-list",
@@ -130,17 +124,20 @@ export const ROUTES = {
     INSERT_BRANCH_AMENITIES: baseApi + "insert-update-branch-amenities",
     GET_COTS_BY_COT_ID: baseApi + "get-cots-by-cot-id",
 
+    // User Page
     GET_USER_GRID_LIST: baseApi + "get-user-grid-list",
     GET_ROLE_PAGE_ACCESS: baseApi + "get-role-page-access",
     GET_ROLE_PAGE_ACCESS_BY_ROLE_ID: baseApi + "get-role-page-access-by-role-id",
     INSERT_UPDATE_ROLE_PAGE_ACCESS: baseApi + "insert-update-role-page-access",
     INSERT_UPDATE_USER_REGISTER: baseApi + "user-register",
 
+    // Complaints
     GET_COMPLAINTS_GRID_LIST: baseApi + "get-complaints-grid-list",
     GET_COMPLAINTS_DETAILS_BY_ID: baseApi + "get-complaints-details-by-id",
     INSERT_UPDATE_COMPLAINTS: baseApi + "insert-update-complaints",
     UPDATE_COMPLAINT_STATUS: baseApi + "update-complaint-status",
 
+    // Admission Grid List
     GET_APPROVED_ADMISSION_GRID_LIST: baseApi + "get-approved-admission-grid-list",
     GET_ADMISSION_GRID_LIST: baseApi + "get-admission-grid-list",
     GET_EB_CHARGES_GRID_LIST: baseApi + "get-eb-charges-grid-list",
@@ -165,6 +162,7 @@ export const ROUTES = {
     GET_ADMISSION_BOOKING_AVAILABILITY: baseApi + "get-admission-booking-availability",
     DELETE_CANDIDATE_ADMISSION: baseApi + "delete-candidate-admission",
 
+    // Candidate Feedback
     GET_CANDIDATE_DETAIL_BY_SEARCH: baseApi + "get-candidate-details-by-search",
     GET_BLACKLIST_GRID_LIST: baseApi + "get-blacklist-grid-list",
     INSERT_UPDATE_CANDIDATE_BLACK_LIST: baseApi + "insert-update-candidate-black-list",
@@ -172,37 +170,51 @@ export const ROUTES = {
     GET_CANDIDATE_FEEDBACKLIST: baseApi + "get-candidate-feedback-grid-list",
     GET_CANDIDATE_FEEDBACK_BY_ID: baseApi + "get-candidate-feedback-by-id",
 
+    // Candidate Attendance
     GET_ATTENDANCE_GRID_LIST: baseApi + "get-attendance-grid-list",
 
+    // Vacate
     GET_VACATE_GRID_LIST: baseApi + "get-vacate-grid-list",
     GET_VACATE_BY_CANDIDATE_ID: baseApi + "get-vacate-by-candidate-id",
     INSERT_UPDATE_VACATE_DETAILS: baseApi + "insert-update-vacate",
     DELETE_VACATE: baseApi + "delete-vacate",
 
+    // Country-State-City
     GET_MASTER_COUNTRY: baseApi + "get-master-country",
     GET_MASTER_STATE: baseApi + "get-master-state",
     GET_MASTER_CITY: baseApi + "get-master-city",
 
+    // Payment Gateway
     GET_PAYMENT_PAGE: baseApi + "get-payment-page",
     UPDATE_PAYMENT_STATUS: baseApi + "update-payment-status",
 
+    // Payment Grid List
     GET_PAYMENT_GRID_LIST: baseApi + "get-payment-grid-list",
+
+    // Payment Schedule Grid List
     GET_PAYMENT_SCHEDULE_GRID_LIST: baseApi + "get-payment-schedule-grid-list",
 
+    // Mobile Number Validation
     VALIDATE_MOBILE_UNIQUENESS: baseApi + "validate-mobile-uniqueness",
+
+    // Email Validation
     VALIDATE_EMAIL_UNIQUENESS: baseApi + "validate-email-uniqueness",
 
+    // Bulk Upload
     BULK_UPLOAD_CANDIDATE_DETAILS: baseApi + "bulk-upload-candidate-details",
     BULK_UPLOAD_COTS: baseApi + "bulk-upload-cots",
     BULK_UPLOAD_ROOMS: baseApi + "bulk-upload-rooms",
     BULK_UPLOAD_VACATE: baseApi + "bulk-upload-vacate",
     BULK_UPLOAD_USERS: baseApi + "bulk-upload-users",
 
+    // Service Provider
     GET_SERVICE_PROVIDER: baseApi + "get-service-provider",
     GET_SERVICE_PROVIDER_CATEGORY: baseApi + "get-service-provider-category",
     INSERT_UPDATE_SERVICE_PROVIDER_CATEGORY: baseApi + "insert-update-service-provider-category",
     INSERT_UPDATE_SERVICE_PROVIDER: baseApi + "insert-update-service-provider",
 
+    // Generate Invoice
     generateInvoicePDF: baseApi + "generate-invoice-pdf",
+
   },
 };

@@ -38,18 +38,18 @@ function AxiosProvider() {
             setOpen(true);
             _setMsg('Something went wrong, Try again');
         }
-        const authInterceptor = axios.interceptors.request.use((config) => config);
+        const authInterceptor = axios.interceptors.request.use();
         return () => {
             axios.interceptors.request.eject(authInterceptor);
         }
-    }, [user]);
+    }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         updateAccessToken();
         axios.interceptors.response.use(function (response) {
             return response;
         }, function (error) {
-            if (error?.response?.status === 401) {
+            if (error.response.status === 401) {
                 setTimeout(() => {
                     setOpen(true);
                     _setMsg('Login token expired. Please Re-Login');

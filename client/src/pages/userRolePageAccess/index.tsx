@@ -1,338 +1,351 @@
 import { useEffect, useState } from "react";
-import {
-  Button,
-  Checkbox,
-  FormControl,
-  FormControlLabel,
-  MenuItem,
-  Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-} from "@mui/material";
+import { CustomAlert, customRadio, customTableHeader, customTableTemplate, getExportEXCEL } from '../../services/HelperService';
+import { Button, Table, TableBody, TableCell, TableHead, TableRow, TableContainer, RadioGroup, FormControlLabel, Radio, Checkbox } from "@mui/material";
 import { KeyboardArrowRightRounded } from "@mui/icons-material";
-import {
-  CustomAlert,
-  customTableHeader,
-  customTableTemplate,
-} from "../../services/HelperService";
-import {
-  getMasterPageList,
-  getMasterUserRole,
-  getRolePageAccessByRoleId,
-  insertUpdateUserRolePageAccess,
-} from "../../models";
 import { IMAGES_ICON } from "../../assets/images/exportImages";
+import { SkeletonProviderTables } from "../../providers/SkeletonProvider";
+import { getMasterPageList, getMasterUserRole, getRolePageAccess, insertUpdateUserRolePageAccess, insertUpdateMasterUserRole } from "../../models";
 import CustomSearch from "../../components/helpers/CustomSearch";
 
-type Props = {
-  PageAccess: string;
-};
 
-type RoleItem = {
-  id: number;
-  roleName: string;
-  isActive?: boolean;
-};
+export default function Index({ PageAccess }: any) {
+    const [_tableItems, _setTableItems] = useState<any>([]);
+    const [_pageList, _setPageList] = useState<any>([]);
+    const [_tableLoading, _setTableLoading] = useState(true);
+    const [_loading, _setLoading] = useState(false);
+    const [_search, _setSearch] = useState('');
+    const [_editForm, _setEditForm] = useState(false);
+    const [_addScreen, _setAddScreen] = useState(false);
 
-type PageItem = {
-  id?: number;
-  pageId: number;
-  pageName: string;
-  pageUrl?: string;
-  accessLevel: "Full" | "ReadOnly" | "No";
-  isActive: boolean;
-};
+    const [_roleList, _setRoleList] = useState<any>([]);
+    const [_updatePageList, _setUpdatePageList] = useState<any>([]);
+    const [_payloadBody, _setPayloadBody] = useState<any>([])
 
-export default function UserRole({ PageAccess }: Props) {
-  const [_roleList, _setRoleList] = useState<RoleItem[]>([]);
-  const [_pageMaster, _setPageMaster] = useState<PageItem[]>([]);
-  const [_pages, _setPages] = useState<PageItem[]>([]);
-  const [_roleId, _setRoleId] = useState<string>("");
-  const [_loading, _setLoading] = useState(false);
-  const [_search, _setSearch] = useState("");
+    const validate = {
+        roleId: { error: false, message: "" },
+        accessLevel: { error: false, message: "" },
+        pages: { error: false, message: "" },
+    };
+    const [_validate, _setValidate] = useState(validate);
 
-  const loadRolesAndPages = () => {
-    getMasterUserRole()
-      .then((resp) => {
-        if (resp?.data?.status === "success") {
-          _setRoleList(resp?.data?.result || []);
-        }
-      })
-      .catch(console.log);
-
-    getMasterPageList()
-      .then((resp) => {
-        if (resp?.data?.status === "success") {
-          const list = (resp?.data?.result || [])?.map((item: any) => ({
-            id: undefined,
-            pageId: item?.id,
-            pageName: item?.pageName,
-            pageUrl: item?.pageUrl,
-            accessLevel: "No" as const,
-            isActive: true,
-          }));
-          _setPageMaster(list);
-        }
-      })
-      .catch(console.log);
-  };
-
-  const loadRoleAccess = (roleId: string) => {
-    if (!roleId) {
-      _setPages([]);
-      return;
-    }
-    if (!_pageMaster?.length) return;
-
-    _setLoading(true);
-    getRolePageAccessByRoleId(Number(roleId))
-      .then((resp) => {
-        if (resp?.data?.status === "success") {
-          const existing: any[] = resp?.data?.result || [];
-          const mapped = _pageMaster.map((page) => {
-            const found = existing.find(
-              (p: any) => p.pageId === page.pageId || p.pageId === page.id
-            );
-            if (found) {
-              return {
-                id: found.id,
-                pageId: found.pageId,
-                pageName: found.pageName || page.pageName,
-                pageUrl: found.pageUrl || page.pageUrl,
-                accessLevel: (found.accessLevel || "No") as
-                  | "Full"
-                  | "ReadOnly"
-                  | "No",
-                isActive:
-                  typeof found.isActive === "boolean" ? found.isActive : true,
-              };
-            }
-            return { ...page };
-          });
-          _setPages(mapped);
-        } else {
-          CustomAlert("warning", resp?.data?.error || "Unable to load page access");
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        CustomAlert("warning", "Unable to load page access");
-      })
-      .finally(() => _setLoading(false));
-  };
-
-  const handleChangeAccess = (
-    pageId: number,
-    level: "Full" | "ReadOnly" | "No"
-  ) => {
-    if (PageAccess === "ReadOnly") return;
-    const updated = _pages.map((item) =>
-      item.pageId === pageId ? { ...item, accessLevel: level, isActive: true } : item
-    );
-    _setPages(updated);
-  };
-
-  const handleSave = () => {
-    if (!_roleId) {
-      CustomAlert("warning", "Select a role");
-      return;
-    }
-    if (!_pages?.length) {
-      CustomAlert("warning", "No pages to update");
-      return;
+    const changePageAccess = (index: number, key: string, value: string) => {
+        const _tempArr = [..._updatePageList]
+        _tempArr[index][key] = value;
+        _setUpdatePageList([..._tempArr])
     }
 
-    _setLoading(true);
-    const payload = {
-      pages: _pages.map((p) => ({
-        id: p.id || undefined,
-        roleId: Number(_roleId),
-        pageId: p.pageId,
-        accessLevel: p.accessLevel,
-        isActive: p.isActive,
-      })),
+    const getPrintTableHeadBody = () => {
+        const header = ["S. No", "User Role", 'Page Access', "Status"];
+        const body = _tableItems?.map((item: any, index: number) => [
+            index + 1,
+            item?.roleName,
+            item?.pages?.filter((mItem: any) => mItem?.accessLevel === 'Read' || mItem?.accessLevel === 'Write')
+                .map((mItem: any) => mItem?.pageName)?.filter(Boolean)?.join(', '),
+            item?.roleStatus ? "Active" : "Inactive"
+        ]);
+        return { header, body };
+    }
+
+    const exportEXCEL = () => {
+        const { header, body } = getPrintTableHeadBody();
+        getExportEXCEL({ header, body, fileName: "User Role" })
+    }
+
+
+    const handleUpdateItem = (item: any) => {
+        const tempArr: any = [];
+        _pageList?.forEach((page: any) => {
+            const findItem = item?.pages?.find((fItem: any) => fItem?.pageId === page?.id);
+            const obj = {
+                id: findItem?.id || 0,
+                roleId: item?.roleId,
+                pageId: page?.id,
+                pageName: page?.pageName,
+                accessLevel: findItem?.accessLevel || "No",
+                isActive: findItem?.isActive || page?.isActive,
+                roleStatus: item?.roleStatus !== false // propagate status to all for easy access
+            };
+            tempArr.push(obj);
+        });
+        _setUpdatePageList([...tempArr]);
+        _setAddScreen(true);
     };
 
-    insertUpdateUserRolePageAccess(payload)
-      .then((resp) => {
-        if (resp?.data?.status === "success") {
-          CustomAlert("success", "Page access updated");
-          loadRoleAccess(_roleId);
-        } else {
-          CustomAlert("warning", resp?.data?.error || "Failed to update access");
+
+    const handleGoBack = () => {
+        _setEditForm(false);
+        handleClearForm();
+    }
+
+    const handleClearForm = () => {
+        _setLoading(false);
+        _setValidate(validate)
+        _setAddScreen(false)
+    }
+
+    const checkValidation = () => {
+        let valid = true;
+        const validation = { ...validate };
+
+        if (!_updatePageList?.length) {
+            validation.pages.error = true;
+            validation.pages.message = "Required Field";
+            valid = false;
         }
-      })
-      .catch((err) => {
-        console.log(err);
-        CustomAlert("error", "Error updating access");
-      })
-      .finally(() => _setLoading(false));
-  };
 
-  const handleChangeRole = (value: string) => {
-    _setRoleId(value);
-    _setSearch("");
-    if (value) {
-      loadRoleAccess(value);
-    } else {
-      _setPages([]);
+        _setValidate(validation);
+        return valid;
+    };
+
+    const handleSubmitForm = async () => {
+        _setLoading(true);
+        if (!checkValidation()) {
+            _setLoading(false);
+            return;
+        }
+
+        // 1. Update the user role's isActive status
+        const roleId = _updatePageList[0]?.roleId;
+        const roleStatus = _updatePageList[0]?.roleStatus !== false;
+        let roleUpdateSuccess = true;
+        try {
+            if (roleId) {
+                const roleObj = _roleList.find((r: any) => r.id === roleId);
+                if (roleObj && roleObj.isActive !== roleStatus) {
+                    const resp = await insertUpdateMasterUserRole({
+                        id: roleId,
+                        roleName: roleObj.roleName,
+                        isActive: roleStatus,
+                        notes: roleObj.notes || ""
+                    });
+                    if (!(resp?.data?.status === "success")) {
+                        roleUpdateSuccess = false;
+                        CustomAlert("warning", "Failed to update role status");
+                    }
+                }
+            }
+        } catch (e) {
+            roleUpdateSuccess = false;
+            CustomAlert("warning", "Failed to update role status");
+        }
+
+        // 2. Update the page access if role status update succeeded
+        if (roleUpdateSuccess) {
+            insertUpdateUserRolePageAccess({ pages: _updatePageList })
+                .then((resp) => {
+                    if (resp?.data?.status === "success") {
+                        getGridList();
+                        handleGoBack();
+                        CustomAlert("success", _updatePageList?.[0]?.id === 0 ? "Successfully saved" : "Successfully Updated");
+                        setTimeout(() => {
+                            location.reload()
+                        }, 1000);
+                    } else {
+                        CustomAlert('warning', resp?.data?.error)
+                    }
+                })
+                .catch((err: any) => {
+                    if (err?.response?.data?.error?.name === "SequelizeUniqueConstraintError") {
+                        CustomAlert("warning", "Duplicates not allowed");
+                    }
+                })
+                .finally(() => _setLoading(false));
+        } else {
+            _setLoading(false);
+        }
     }
-  };
 
-  const filteredPages = _pages?.filter((content: any) => {
-    const lowerSearchInput = _search?.toLowerCase()?.trim();
-    if (!lowerSearchInput) return true;
-    return Object?.values(content || {})?.some((value: any) =>
-      value?.toString()?.toLowerCase()?.includes(lowerSearchInput)
-    );
-  });
-
-  useEffect(() => {
-    loadRolesAndPages();
-  }, []);
-
-  useEffect(() => {
-    if (_roleId && _pageMaster?.length) {
-      loadRoleAccess(_roleId);
+    const getOtherList = () => {
+        getMasterPageList()
+            .then((resp) => {
+                if (resp?.data?.status === "success") {
+                    _setPageList(resp?.data?.result);
+                }
+            })
+            .catch(console.log)
+        getMasterUserRole()
+            .then((resp) => {
+                if (resp?.data?.status === "success") {
+                    _setRoleList(resp?.data?.result);
+                }
+            })
+            .catch(console.log)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_pageMaster]);
 
-  return (
-    <div className="container">
-      <div className="row justify-content-between align-items-center py-3">
-        <div className="col-md-4 my-2 d-flex align-items-center gap-1">
-          <span className="text-dark fw-bold">User </span>
-          <span className="text-dark">
-            <KeyboardArrowRightRounded />
-          </span>
-          <span className="text-muted">Page Access</span>
-        </div>
-        <div className="col-md-6 my-2 d-flex justify-content-end align-items-center gap-4">
-          <FormControl size="small" sx={{ minWidth: 200 }}>
-            <Select
-              value={_roleId}
-              onChange={(e: any) => handleChangeRole(e.target.value)}
-              displayEmpty
-              style={{ backgroundColor: "#F3F3F3" }}
-            >
-              <MenuItem value="">
-                <span className="text-muted fs14">Select Role</span>
-              </MenuItem>
-              {_roleList
-                ?.filter((r) => r.isActive ?? true)
-                ?.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.roleName}
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
-          <CustomSearch
-            getSearchText={(value: string) => {
-              _setSearch(value);
-            }}
-          />
-          {PageAccess === "Write" && (
-            <Button
-              className="text-capitalize"
-              variant="contained"
-              color="primary"
-              disabled={_loading || !_roleId}
-              onClick={handleSave}
-            >
-              Save
-            </Button>
-          )}
-        </div>
-      </div>
+    const getGridList = () => {
+        _setTableLoading(true);
+        getRolePageAccess()
+            .then((resp) => {
+                if (resp?.data?.status === "success") {
+                    _setTableItems(resp?.data?.result);
+                }
+            })
+            .catch(console.log)
+            .finally(() => _setTableLoading(false));
+    }
 
-      <TableContainer className="tableBorder rounded">
-        <Table sx={{ ...customTableTemplate }}>
-          <TableHead>
-            <TableRow sx={{ ...customTableHeader }}>
-              <TableCell className="fw-bold">S.No</TableCell>
-              <TableCell className="fw-bold">Page</TableCell>
-              <TableCell className="fw-bold" align="center">
-                Full Access
-              </TableCell>
-              <TableCell className="fw-bold" align="center">
-                Read Only
-              </TableCell>
-              <TableCell className="fw-bold" align="center">
-                No Access
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredPages?.length > 0 ? (
-              filteredPages?.map((item: PageItem, index: number) => (
-                <TableRow key={item.pageId || index}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell className="text-nowrap">
-                    {item.pageName || "-"}
-                  </TableCell>
-                  <TableCell align="center">
+    // Helper to initialize a new page access list for a new role
+    const handleAddNew = () => {
+        if (!_roleList?.length || !_pageList?.length) return;
+        // Default to first role in the list
+        const defaultRoleId = _roleList[0]?.id;
+        const tempArr = _pageList.map((page: any) => ({
+            id: 0,
+            roleId: defaultRoleId,
+            pageId: page.id,
+            pageName: page.pageName,
+            accessLevel: "No",
+            isActive: page.isActive,
+            roleStatus: true // default to active
+        }));
+        _setUpdatePageList([...tempArr]);
+        _setAddScreen(true);
+    };
+
+    useEffect(() => {
+        getOtherList()
+        getGridList();
+    }, []);
+
+
+    return <>
+        {!_addScreen ? <div className="container">
+            <div className="row justify-content-between align-items-center py-3">
+                <div className="col-md-4 my-2 d-flex align-items-center gap-2">
+                    <span className="text-dark fw-bold">User </span>
+                    <span className="text-dark"><KeyboardArrowRightRounded /></span>
+                    <span className="text-muted">Page Access By Role</span>
+                </div>
+                <div className="col-md-6 my-2 d-flex justify-content-end align-items-center gap-4">
+                    <Button className="text-capitalize" sx={{ color: "black" }} startIcon={<img height={18} src={IMAGES_ICON.TableNewItemIcon} />} onClick={handleAddNew}>Add New</Button>
+                    <CustomSearch getSearchText={(value: string) => _setSearch(value)} />
+                    <img height={24} src={IMAGES_ICON.TableDownloadIcon} role="button" draggable="false" onClick={exportEXCEL} />
+                </div>
+            </div>
+            <TableContainer className="tableBorder rounded">
+                <Table sx={{ ...customTableTemplate }}>
+                    <TableHead>
+                        <TableRow className="px-2" sx={{ ...customTableHeader }}>
+                            <TableCell className="fw-bold">S.No</TableCell>
+                            <TableCell className="fw-bold">Role</TableCell>
+                            <TableCell className="fw-bold">Screen Access</TableCell>
+                            <TableCell className="fw-bold" align="center">Status</TableCell>
+                            <TableCell className="fw-bold">Action</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {_tableItems?.length > 0 ? (
+                            _tableItems?.filter((content: any) => {
+                                const lowerSearchInput = _search?.toLowerCase()?.trim();
+                                return lowerSearchInput === '' || Object?.values(content)?.some((value) =>
+                                    value?.toString()?.toLowerCase()?.includes(lowerSearchInput)
+                                );
+                            })?.map((item: any, index: number) => (
+                                <TableRow key={index}>
+                                    <TableCell>{index + 1}</TableCell>
+                                    <TableCell className="text-muted text-nowrap">{item?.roleName}</TableCell>
+                                    <TableCell className="text-muted">
+                                        <div className="d-flex flex-wrap align-items-center gap-2">
+                                            {item?.pages?.filter((mItem: any) => mItem?.accessLevel === 'Read' || mItem?.accessLevel === 'Write')
+                                                .map((mItem: any) => <span key={mItem?.pageId} className="bg-light p-2">{mItem?.pageName}</span>)}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-muted" align="center">
+                                        {item?.roleStatus ?
+                                            <span className="fs12 statusBgActive text-success rounded--50 px-3 py-1">Active</span>
+                                            : <span className="fs12 statusBgInactive text-danger rounded--50 px-3 py-1">Inactive</span>
+                                        }
+                                    </TableCell>
+                                    <TableCell className="text-muted" align="center">
+                                        <div className="d-flex align-items-center justify-content-center gap-3">
+                                            <div className="d-flex align-items-center justify-content-center gap-1" role="button" onClick={() => handleUpdateItem(item)}>
+                                                <span className="">Edit</span>
+                                                <img height="16" src={IMAGES_ICON.EditIcon} alt="icon" draggable="false" />
+                                            </div>
+                                            <div className="d-flex align-items-center justify-content-center gap-1" role="button" onClick={() => {/* implement delete logic here */ }}>
+                                                <span className="">Delete</span>
+                                                <img height="16" src={IMAGES_ICON.DeleteIcon} alt="icon" draggable="false" />
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : !_tableLoading && (
+                            <TableRow>
+                                <TableCell className="fs-3 text-muted" align="center" colSpan={5}>Data Not Found</TableCell>
+                            </TableRow>
+                        )}
+                        <SkeletonProviderTables columns={5} visible={_tableLoading} />
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </div> :
+            <div className="container py-3">
+                <div className="mb-3">
+                    <label className="fw-bold mb-1">User Role</label>
+                    <select
+                        className="form-select"
+                        value={_updatePageList[0]?.roleId || ''}
+                        onChange={e => {
+                            const newRoleId = Number(e.target.value);
+                            const updated = _updatePageList.map((item: any) => ({ ...item, roleId: newRoleId }));
+                            _setUpdatePageList(updated);
+                        }}
+                    >
+                        {_roleList.map((role: any) => (
+                            <option key={role.id} value={role.id}>{role.roleName}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="mb-3 d-flex align-items-center gap-3">
                     <FormControlLabel
-                      control={
-                        <Checkbox
-                          size="small"
-                          checked={item.accessLevel === "Full"}
-                          onChange={() => handleChangeAccess(item.pageId, "Full")}
-                          disabled={PageAccess === "ReadOnly" || !_roleId}
-                        />
-                      }
-                      label=""
+                        control={
+                            <Checkbox
+                                checked={_updatePageList[0]?.roleStatus !== false}
+                                onChange={e => {
+                                    const newStatus = e.target.checked;
+                                    const updated = _updatePageList.map((item: any) => ({ ...item, roleStatus: newStatus }));
+                                    _setUpdatePageList(updated);
+                                }}
+                            />
+                        }
+                        label={_updatePageList[0]?.roleStatus !== false ? 'Active' : 'Inactive'}
                     />
-                  </TableCell>
-                  <TableCell align="center">
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          size="small"
-                          checked={item.accessLevel === "ReadOnly"}
-                          onChange={() =>
-                            handleChangeAccess(item.pageId, "ReadOnly")
-                          }
-                          disabled={PageAccess === "ReadOnly" || !_roleId}
-                        />
-                      }
-                      label=""
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          size="small"
-                          checked={item.accessLevel === "No"}
-                          onChange={() => handleChangeAccess(item.pageId, "No")}
-                          disabled={PageAccess === "ReadOnly" || !_roleId}
-                        />
-                      }
-                      label=""
-                    />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  className="fs-3 text-muted"
-                  align="center"
-                  colSpan={5}
-                >
-                  {_roleId ? "Pages not found" : "Select a role to view pages"}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </div>
-  );
+                </div>
+                <div className="d-flex align-items-center justify-content-between py-2">
+                    <div className="d-flex align-items-center" role="button" onClick={() => !_loading && handleGoBack()}>
+                        <img height={24} draggable={false} src={IMAGES_ICON.BackIcon} />
+                        <div className="fw-bold">Back to List</div>
+                    </div>
+                    <Button variant="contained" color="primary" className="px-4" disabled={_loading} onClick={handleSubmitForm}>Save</Button>
+                </div>
+                <div className="my-3">
+                    <TableContainer className="tableBorder rounded">
+                        <Table size="small" sx={{ ...customTableTemplate }}>
+                            <TableHead>
+                                <TableRow className="px-2" sx={{ ...customTableHeader }}>
+                                    <TableCell className="fw-bold" sx={{ maxWidth: "200px" }}>Page</TableCell>
+                                    <TableCell className="fw-bold">Screen Access</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody style={{ overflowY: "auto" }}>
+                                {_updatePageList?.map((mItem: any, mIndex: number) => <TableRow key={mIndex}>
+                                    <TableCell className="text-nowrap text-truncate" sx={{ maxWidth: "200px", fontSize: "16px" }}>{mItem?.pageName}</TableCell>
+                                    <TableCell className="text-nowrap">
+                                        <div className="no-select">
+                                            <RadioGroup className="flex-nowrap gap-4" row value={mItem?.accessLevel} sx={{ marginLeft: "10px" }}
+                                                onChange={(e) => changePageAccess(mIndex, "accessLevel", e.target.value)}>
+                                                <FormControlLabel className="fieldBorderDark rounded pe-3" value={"Write"} control={<Radio size="small" sx={{ ...customRadio }} />} label="Read & Write" />
+                                                <FormControlLabel className="fieldBorderDark rounded pe-3" value={"Read"} control={<Radio size="small" sx={{ ...customRadio }} />} label="Read Only" />
+                                                <FormControlLabel className="fieldBorderDark rounded pe-3" value={"No"} control={<Radio size="small" sx={{ ...customRadio }} />} label="No Access" />
+                                            </RadioGroup>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>)}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </div>
+            </div >}
+    </>
 }

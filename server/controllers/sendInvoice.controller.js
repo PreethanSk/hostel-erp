@@ -116,7 +116,7 @@ exports.generateInvoicePDF = async (req, res) => {
 
         if (sendMail) {
             sendEmailWithPDF(paymentDetail?.email,
-                `Receipt Voucher - ${moment(paymentDetail.updatedAt).format('DD_MM_YYYY')} - HostelHives`,
+                `Receipt Voucher - ${moment(paymentDetail.updatedAt).format('DD_MM_YYYY')} - HostelHost`,
                 pdfBuffer,
                 `Receipt_${moment(paymentDetail.updatedAt).format('DD_MM_YYYY')}_${paymentDetail.name.replace(/\s+/g, '_')}.pdf`)
             return res.end();

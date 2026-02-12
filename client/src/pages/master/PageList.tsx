@@ -158,7 +158,6 @@ export default function Index({ PageAccess }: any) {
                 <TableRow sx={{ ...customTableHeader }}>
                   <TableCell className="fw-bold">S.No</TableCell>
                   <TableCell className="fw-bold">Page Name</TableCell>
-                  <TableCell className="fw-bold">Page URL</TableCell>
                   <TableCell className="fw-bold" align="center">Status</TableCell>
                   <TableCell className="fw-bold" align="center">Action</TableCell>
                 </TableRow>
@@ -174,7 +173,6 @@ export default function Index({ PageAccess }: any) {
                     <TableRow key={index}>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>{item?.pageName}</TableCell>
-                      <TableCell>{item?.pageURL}</TableCell>
                       <TableCell align="center">{item?.isActive ?
                         <span className="fs12 statusBgActive text-success rounded--50 px-3 py-1">Active</span>
                         : <span className="fs12 statusBgInactive text-danger rounded--50 px-3 py-1">Inactive</span>
@@ -195,10 +193,10 @@ export default function Index({ PageAccess }: any) {
                   ))
                 ) : !_tableLoading && (
                   <TableRow>
-                    <TableCell className="fs-3 text-muted" align="center" colSpan={5}>Data Not Found</TableCell>
+                    <TableCell className="fs-3 text-muted" align="center" colSpan={4}>Data Not Found</TableCell>
                   </TableRow>
                 )}
-                <SkeletonProviderTables columns={5} visible={_tableLoading} />
+                <SkeletonProviderTables columns={4} visible={_tableLoading} />
               </TableBody>
             </Table>
           </TableContainer>

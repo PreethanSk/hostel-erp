@@ -160,9 +160,9 @@ export const validatePhone = (number: string | null | undefined, length: number 
 };
 
 export const validateMobileNumberUniqueness = async (
-    candidateRefId: number,
-    mobileNumber: string,
-    excludeId?: number,
+    candidateRefId: number, 
+    mobileNumber: string, 
+    excludeId?: number, 
     fieldType?: string
 ): Promise<{ isValid: boolean; message: string; duplicateFields?: string[]; otherCandidates?: any[] }> => {
     try {
@@ -183,7 +183,7 @@ export const validateMobileNumberUniqueness = async (
                 otherCandidates: result.otherCandidateChecks || []
             };
         }
-
+        
         return {
             isValid: false,
             message: 'Unable to validate mobile number. Please try again.'
@@ -198,8 +198,8 @@ export const validateMobileNumberUniqueness = async (
 };
 
 export const validateEmailUniqueness = async (
-    candidateRefId: number,
-    email: string,
+    candidateRefId: number, 
+    email: string, 
     excludeId?: number
 ): Promise<{ isValid: boolean; message: string; duplicateFields?: string[] }> => {
     try {
@@ -218,7 +218,7 @@ export const validateEmailUniqueness = async (
                 duplicateFields: result.duplicateChecks?.map((d: any) => d.field) || []
             };
         }
-
+        
         return {
             isValid: false,
             message: 'Unable to validate email. Please try again.'
@@ -250,10 +250,10 @@ export const validateFloat = (number: string | null | undefined): boolean => {
 };
 
 export const isPastDateValid = (dateString: any) => {
-    const inputDate = moment(new Date(dateString), 'YYYY-MM-DD');
+    const inputDate = moment(new Date(dateString), 'YYYY-MM-DD'); // Assuming the input format is YYYY-MM-DD
 
     if (inputDate.isValid()) {
-        const minDate = moment('1900-12-31', 'YYYY-MM-DD');
+        const minDate = moment('1900-12-31', 'YYYY-MM-DD'); // Minimum valid date
         return inputDate.isSameOrAfter(minDate);
     }
 

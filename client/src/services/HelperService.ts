@@ -14,7 +14,7 @@ export const userSession = (withToken = false) => {
 
     try {
         const user = JSON.parse(atob(_token));
-        const response: any = {
+        const response = {
             id: user?.id,
             accessToken: user?.accessToken,
             firstName: user?.firstName,
@@ -67,6 +67,7 @@ export const customRadio = {
 
 export const customTableHeader = {
     backgroundColor: "#FAFAFA",
+    // border: "1px solid #D2D2D2",
     borderRadius: '10px',
 }
 
@@ -88,7 +89,7 @@ export const textFieldStyleLogin = {
         '&.Mui-focused fieldset': {
             border: '2px solid #1487eb'
         },
-        backgroundColor: 'white',
+        backgroundColor: 'white', // Set background color here
     },
     '& .MuiInputBase-input': {
         fontFamily: 'Nunito, sans-serif !important',
@@ -152,7 +153,7 @@ export const textFieldStyleAssignedby = {
         '&.Mui-focused fieldset': {
             border: '2px solid #F76D61'
         },
-        backgroundColor: 'white',
+        backgroundColor: 'white', // Set background color here
     },
     '& .MuiInputBase-input': {
         fontFamily: 'Nunito, sans-serif !important',
@@ -172,10 +173,13 @@ export const textFieldStyleAssignedby = {
     },
 }
 export function EncodeUnicode(str: any) {
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (_match, p1) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (match, p1) {
+        console.log(match)
         return String.fromCharCode(parseInt(p1, 16))
     }))
 }
+
+// Decoding base64 ⇢ UTF8   
 
 export function DecodeUnicode(str: any) {
     return decodeURIComponent(Array.prototype.map.call(atob(str), function (c) {
@@ -189,14 +193,14 @@ type SweetAlertIcon = 'success' | 'error' | 'warning' | 'info' | 'question'
 export const CustomAlert = (alertType: SweetAlertIcon | undefined, message: string) => {
 
     return Swal.fire({
-        toast: true,
-        position: 'bottom-right',
-        icon: alertType,
-        title: message,
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        showCloseButton: true,
+        toast: true,               // Enable toast mode
+        position: 'bottom-right',  // Position the toast in the bottom-right corner
+        icon: alertType,             // Icon type (success, error, info, etc.)
+        title: message, // The message to display
+        showConfirmButton: false,  // Disable the confirm button
+        timer: 3000,               // Time in milliseconds before the toast auto-closes
+        timerProgressBar: true,    // Show a progress bar
+        showCloseButton: true,     // Optionally show a close button
         customClass: {
             popup: 'toast-popup',
             title: 'toast-title',

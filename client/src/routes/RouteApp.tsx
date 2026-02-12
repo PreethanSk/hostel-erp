@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { ROUTES } from '../configs/constants';
 import AuthLayout from '../components/layouts/authLayout';
 import DashboardLayout from '../components/layouts/dashboardLayout';
@@ -10,10 +10,6 @@ import { useStateValue } from '../providers/StateProvider';
 import AxiosProvider from '../providers/AxiosProvider';
 
 const Home = lazy(() => import('../pages/home'));
-const DashboardCotsDetail = lazy(() => import('../pages/dashboardDetail/dashboard-cots-detail'));
-const DashboardComplaintsDetail = lazy(() => import('../pages/dashboardDetail/dashboard-complaints-detail'));
-const DashboardPaymentsDetail = lazy(() => import('../pages/dashboardDetail/dashboard-payments-detail'));
-const DashboardBookingsDetail = lazy(() => import('../pages/dashboardDetail/dashboard-bookings-detail'));
 const PaymentStatus = lazy(() => import('../pages/home/paymentStatus'));
 const NotFound = lazy(() => import('../pages/notFound'));
 const Login = lazy(() => import('../pages/auth/login'));
@@ -22,7 +18,6 @@ const AdmissionList = lazy(() => import('../pages/admissions'));
 const AdmissionConfirmation = lazy(() => import('../pages/admissions/admissionConfirm'));
 const AdmissionTransfer = lazy(() => import('../pages/admissions/admissionTransfer'));
 const CandidatePayments = lazy(() => import('../pages/admissions/candidatePayments'));
-const CandidatePaymentDetails = lazy(() => import('../pages/admissions/candidatePaymentDetails'));
 const CandidateEbCharges = lazy(() => import('../pages/admissions/ebCharges'));
 const Branch = lazy(() => import('../pages/branch'));
 const FeedBack = lazy(() => import('../pages/feedBack'));
@@ -57,24 +52,20 @@ function RouteApp() {
         <Suspense fallback={<LoadingPage />}>
             <AxiosProvider />
             <Routes>
+                {/* Auth Routes */}
                 <Route path={ROUTES.AUTH.LOGIN} element={<AuthLayout />}>
                     <Route path={ROUTES.AUTH.LOGIN} element={<Login />} />
                 </Route>
 
+                {/* Dashboard Routes */}
                 <Route path={ROUTES.HOME.HOME} element={<DashboardLayout />}>
-                    <Route index element={<Navigate to={ROUTES.HOME.DASHBOARD} replace />} />
                     <Route path={ROUTES.HOME.DASHBOARD} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.DASHBOARD) === 'No' ? <NoAccess /> : <Home />}</Suspense>} />
-                    <Route path={ROUTES.HOME.DASHBOARD_DETAIL.COTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.DASHBOARD) === 'No' ? <NoAccess /> : <DashboardCotsDetail />}</Suspense>} />
-                    <Route path={ROUTES.HOME.DASHBOARD_DETAIL.COMPLAINTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.DASHBOARD) === 'No' ? <NoAccess /> : <DashboardComplaintsDetail />}</Suspense>} />
-                    <Route path={ROUTES.HOME.DASHBOARD_DETAIL.PAYMENTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.DASHBOARD) === 'No' ? <NoAccess /> : <DashboardPaymentsDetail />}</Suspense>} />
-                    <Route path={ROUTES.HOME.DASHBOARD_DETAIL.BOOKINGS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.DASHBOARD) === 'No' ? <NoAccess /> : <DashboardBookingsDetail />}</Suspense>} />
                     <Route path={ROUTES.HOME.PAYMENT_STATUS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.PAYMENT_STATUS) === 'No' ? <NoAccess /> : <PaymentStatus />}</Suspense>} />
                     <Route path={ROUTES.HOME.COMPLAINTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.COMPLAINTS) === 'No' ? <NoAccess /> : <Complaint PageAccess={checkPageAccess(ROUTES.HOME.COMPLAINTS)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.ADMISSION.LIST} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.LIST) === 'No' ? <NoAccess /> : <AdmissionList PageAccess={checkPageAccess(ROUTES.HOME.ADMISSION.LIST)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.ADMISSION.CONFIRMATION} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.CONFIRMATION) === 'No' ? <NoAccess /> : <AdmissionConfirmation PageAccess={checkPageAccess(ROUTES.HOME.ADMISSION.LIST)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.ADMISSION.TRANSFER} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.TRANSFER) === 'No' ? <NoAccess /> : <AdmissionTransfer PageAccess={checkPageAccess(ROUTES.HOME.ADMISSION.TRANSFER)} />}</Suspense>} />
-                    <Route path={ROUTES.HOME.ADMISSION.PAYMENTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.PAYMENTS) === 'No' ? <NoAccess /> : <CandidatePayments PageAccess={checkPageAccess(ROUTES.HOME.ADMISSION.PAYMENTS)} />}</Suspense>} />
-                    <Route path={ROUTES.HOME.ADMISSION.PAYMENTS + "/details"} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.PAYMENTS) === 'No' ? <NoAccess /> : <CandidatePaymentDetails />}</Suspense>} />
+                    <Route path={ROUTES.HOME.ADMISSION.PAYMENTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.PAYMENTS) === 'No' ? <NoAccess /> : <CandidatePayments />}</Suspense>} />
                     <Route path={ROUTES.HOME.ADMISSION.EB_CHARGES} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.EB_CHARGES) === 'No' ? <NoAccess /> : <CandidateEbCharges PageAccess={checkPageAccess(ROUTES.HOME.ADMISSION.EB_CHARGES)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.BRANCH} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.BRANCH) === 'No' ? <NoAccess /> : <Branch PageAccess={checkPageAccess(ROUTES.HOME.BRANCH)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.FEEDBACK} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.FEEDBACK) === 'No' ? <NoAccess /> : <FeedBack PageAccess={checkPageAccess(ROUTES.HOME.FEEDBACK)} />}</Suspense>} />
@@ -98,7 +89,8 @@ function RouteApp() {
                     <Route path={ROUTES.HOME.USER.ROLE} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.USER.ROLE) === 'No' ? <NoAccess /> : <UserRole PageAccess={checkPageAccess(ROUTES.HOME.USER.ROLE)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.USER.LIST} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.USER.LIST) === 'No' ? <NoAccess /> : <UserList PageAccess={checkPageAccess(ROUTES.HOME.USER.LIST)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.USER.SERVICE_PROVIDER} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.USER.SERVICE_PROVIDER) === 'No' ? <NoAccess /> : <ServiceProvider PageAccess={checkPageAccess(ROUTES.HOME.USER.SERVICE_PROVIDER)} />}</Suspense>} />
-                    <Route path="*" element={<NotFound />} />
+                    {/* Not Found Route */}
+                    <Route path={"*"} element={<NotFound />} />
                 </Route>
             </Routes>
         </Suspense>
