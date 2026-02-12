@@ -35,7 +35,10 @@ const {
   deleteMasterIssueCategory,
   deleteMasterIssueSubCategory,
   deleteMasterPageList,
-  deleteMasterUserRole
+  deleteMasterUserRole,
+  getMasterServiceProviderCategories,
+  insertUpdateMasterServiceProviderCategory,
+  deleteMasterServiceProviderCategory
 } = require("../controllers/master.controller");
 const {
   getMasterCountry,
@@ -63,6 +66,7 @@ router.get(constants.path.getMasterIssueCategory, verifyToken, getMasterIssueCat
 router.get(constants.path.getMasterIssueSubCategory, verifyToken, getMasterIssueSubCategories);
 router.get(constants.path.getMasterPageList, verifyToken, getMasterPageLists);
 router.get(constants.path.getMasterUserRole, getMasterUserRoles);
+router.get(constants.path.getMasterServiceProviderCategory, verifyToken, getMasterServiceProviderCategories);
 router.post(constants.path.insertUpdateMasterAmenitiesCategory, verifyToken, insertUpdateMasterAmenitiesCategories);
 router.post(constants.path.insertUpdateMasterAmenitiesSubCategory, verifyToken, insertUpdateMasterAmenitiesSubCategories);
 router.post(constants.path.insertUpdateMasterAmenitiesFacilities, verifyToken, insertUpdateMasterAmenitiesFacilities);
@@ -74,8 +78,9 @@ router.post(constants.path.insertUpdateMasterIssueCategory, verifyToken, insertU
 router.post(constants.path.insertUpdateMasterIssueSubCategory, verifyToken, insertUpdateMasterIssueSubCategories);
 router.post(constants.path.insertUpdateMasterPageList, verifyToken, insertUpdateMasterPageLists);
 router.post(constants.path.insertUpdateMasterUserRole, insertUpdateMasterUserRoles);
+router.post(constants.path.insertUpdateMasterServiceProviderCategory, verifyToken, insertUpdateMasterServiceProviderCategory);
 
-router.delete(constants.path.deleteMasterAmenitiesCategory, verifyToken, deleteMasterAmenitiesCategory)
+router.delete(constants.path.deleteMasterAmenitiesCategory, verifyToken, deleteMasterAmenitiesCategory);
 router.delete(constants.path.deleteMasterAmenitiesSubCategory, verifyToken, deleteMasterAmenitiesSubCategory);
 router.delete(constants.path.deleteMasterAmenitiesFacility, verifyToken, deleteMasterAmenitiesFacility);
 router.delete(constants.path.deleteMasterRoomType, verifyToken, deleteMasterRoomType);
@@ -86,5 +91,6 @@ router.delete(constants.path.deleteMasterIssueCategory, verifyToken, deleteMaste
 router.delete(constants.path.deleteMasterIssueSubCategory, verifyToken, deleteMasterIssueSubCategory);
 router.delete(constants.path.deleteMasterPageList, verifyToken, deleteMasterPageList);
 router.delete(constants.path.deleteMasterUserRole, verifyToken, deleteMasterUserRole);
+router.delete(constants.path.deleteMasterServiceProviderCategory, verifyToken, deleteMasterServiceProviderCategory);
 
 module.exports = router;

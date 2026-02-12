@@ -108,6 +108,9 @@ export const deleteMasterPageList = (id: number) => {
 export const deleteMasterUserRole = (id: number) => {
   return httpDelete(ROUTES.API.DELETE_MASTER_USER_ROLE + `?id=${id}`);
 };
+export const deleteMasterServiceProviderCategory = (id: number) => {
+  return httpDelete(ROUTES.API.DELETE_MASTER_SERVICE_PROVIDER_CATEGORY + `?id=${id}`);
+};
 
 // Admissions
 export const getApprovedAdmissionGridList = (page: number = 1, size: number = 0, branchId: string = "", fromDate: string = "", toDate: string = "", paymentStatus: string = "") => {

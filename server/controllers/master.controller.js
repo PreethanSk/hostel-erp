@@ -823,6 +823,8 @@ exports.insertUpdateMasterUserRoles = async (req, res) => {
             body?.id ? "Updated Successfully" : "Inserted Successfully"
           )
         );
+    } else {
+      return res.status(400).json(await formatResponse.error(insertResponse));
     }
   } catch (error) {
     console.log(error);
@@ -841,6 +843,78 @@ exports.deleteMasterUserRole = async (req, res) => {
       return res.status(200).json(await formatResponse.success("Deleted Successfully"));
     } else {
       return res.status(404).json(await formatResponse.error("User role not found"));
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json(await formatResponse.error(error));
+  }
+};
+
+exports.getMasterServiceProviderCategories = async (req, res) => {
+  try {
+    const response = await db.ServiceProviderCategory.findAll();
+    return res.status(200).json(await formatResponse.success(response));
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json(await formatResponse.error(error));
+  }
+};
+
+exports.insertUpdateMasterServiceProviderCategory = async (req, res) => {
+  try {
+    const body = {
+      id: req.body.id || 0,
+      name: req.body.name?.trim(),
+      description: req.body.description || null,
+      isActive: req.body.isActive !== undefined ? req.body.isActive : true,
+    };
+
+    const existing = await db.ServiceProviderCategory.findOne({
+      where: {
+        name: db.Sequelize.where(
+          db.Sequelize.fn("LOWER", db.Sequelize.col("name")),
+          req.body.name.toLowerCase()
+        ),
+        ...(body.id ? { id: { [db.Sequelize.Op.ne]: body.id } } : {}),
+      },
+    });
+
+    if (existing) {
+      return res.status(200).json(await formatResponse.error("Name already exists"));
+    }
+
+    let insertResponse = null;
+    if (body?.id) {
+      insertResponse = await db.ServiceProviderCategory.update(body, { where: { id: body?.id } });
+    } else {
+      insertResponse = await db.ServiceProviderCategory.create(body);
+    }
+    if (insertResponse) {
+      return res.status(body?.id ? 200 : 201).json(
+        await formatResponse.success(
+          body?.id ? "Updated Successfully" : "Inserted Successfully"
+        )
+      );
+    } else {
+      return res.status(400).json(await formatResponse.error(insertResponse));
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json(await formatResponse.error(error));
+  }
+};
+
+exports.deleteMasterServiceProviderCategory = async (req, res) => {
+  try {
+    const { id } = req.query;
+    if (!id) {
+      return res.status(400).json(await formatResponse.error("Service provider category id is required"));
+    }
+    const deleted = await db.ServiceProviderCategory.destroy({ where: { id } });
+    if (deleted) {
+      return res.status(200).json(await formatResponse.success("Deleted Successfully"));
+    } else {
+      return res.status(404).json(await formatResponse.error("Service provider category not found"));
     }
   } catch (error) {
     console.log(error);

@@ -107,6 +107,7 @@ export const ROUTES = {
     DELETE_MASTER_ISSUE_SUB_CATEGORY: baseApi + "delete-master-issue-sub-category",
     DELETE_MASTER_PAGE_LIST: baseApi + "delete-master-page-list",
     DELETE_MASTER_USER_ROLE: baseApi + "delete-master-user-role",
+    DELETE_MASTER_SERVICE_PROVIDER_CATEGORY: baseApi + "delete-master-service-provider-category",
 
     GET_BRANCH_CANDIDATE_BY_SEARCH: baseApi + "get-branch-candidate-by-search",
     GET_BRANCH_DETAIL_BY_ID: baseApi + "get-branch-detail-by-id",
