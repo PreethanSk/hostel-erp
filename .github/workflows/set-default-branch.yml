@@ -1,0 +1,85 @@
+name: Set Dev as Default Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Branch to set as default'
+        required: true
+        default: 'dev'
+        type: string
+
+jobs:
+  set-default-branch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Verify branch exists
+        id: verify
+        run: |
+          if git rev-parse --verify origin/${{ inputs.target_branch }} >/dev/null 2>&1; then
+            echo "Branch ${{ inputs.target_branch }} exists"
+            echo "branch_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Error: Branch ${{ inputs.target_branch }} does not exist"
+            echo "branch_exists=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      - name: Set default branch using GitHub API
+        if: steps.verify.outputs.branch_exists == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TARGET_BRANCH: ${{ inputs.target_branch }}
+        run: |
+          echo "Setting $TARGET_BRANCH as the default branch..."
+          
+          RESPONSE=$(gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/$REPO \
+            -f default_branch="$TARGET_BRANCH")
+          
+          NEW_DEFAULT=$(echo "$RESPONSE" | jq -r '.default_branch')
+          
+          if [ "$NEW_DEFAULT" = "$TARGET_BRANCH" ]; then
+            echo "✅ Success! Default branch is now: $NEW_DEFAULT"
+          else
+            echo "❌ Failed to set default branch"
+            echo "Current default: $NEW_DEFAULT"
+            exit 1
+          fi
+      
+      - name: Update local git configuration
+        if: steps.verify.outputs.branch_exists == 'true'
+        run: |
+          git remote set-head origin ${{ inputs.target_branch }}
+          echo "✅ Local git configuration updated"
+      
+      - name: Display next steps
+        if: steps.verify.outputs.branch_exists == 'true'
+        run: |
+          echo "=========================================="
+          echo "Default branch has been changed to: ${{ inputs.target_branch }}"
+          echo "=========================================="
+          echo ""
+          echo "Recommended next steps for team members:"
+          echo "1. Update local repositories:"
+          echo "   git fetch origin"
+          echo "   git remote set-head origin ${{ inputs.target_branch }}"
+          echo "   git checkout ${{ inputs.target_branch }}"
+          echo "   git pull origin ${{ inputs.target_branch }}"
+          echo ""
+          echo "2. Update any CI/CD configurations that reference the old default branch"
+          echo "3. Update documentation as needed"
+          echo ""
+          echo "Verify at: https://github.com/${{ github.repository }}/settings/branches"
