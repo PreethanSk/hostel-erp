@@ -16,6 +16,12 @@ export const ROUTES = {
   HOME: {
     HOME: baseRoute + "",
     DASHBOARD: baseRoute + "dashboard",
+    DASHBOARD_DETAIL: {
+      COTS: baseRoute + "dashboard/cots-detail",
+      COMPLAINTS: baseRoute + "dashboard/complaints-detail",
+      PAYMENTS: baseRoute + "dashboard/payments-detail",
+      BOOKINGS: baseRoute + "dashboard/bookings-detail",
+    },
     COMPLAINTS: baseRoute + "complaints",
     ADMISSION: {
       HOME: "admission",

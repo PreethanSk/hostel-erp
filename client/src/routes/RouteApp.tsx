@@ -10,6 +10,10 @@ import { useStateValue } from '../providers/StateProvider';
 import AxiosProvider from '../providers/AxiosProvider';
 
 const Home = lazy(() => import('../pages/home'));
+const DashboardCotsDetail = lazy(() => import('../pages/dashboardDetail/dashboard-cots-detail'));
+const DashboardComplaintsDetail = lazy(() => import('../pages/dashboardDetail/dashboard-complaints-detail'));
+const DashboardPaymentsDetail = lazy(() => import('../pages/dashboardDetail/dashboard-payments-detail'));
+const DashboardBookingsDetail = lazy(() => import('../pages/dashboardDetail/dashboard-bookings-detail'));
 const PaymentStatus = lazy(() => import('../pages/home/paymentStatus'));
 const NotFound = lazy(() => import('../pages/notFound'));
 const Login = lazy(() => import('../pages/auth/login'));
@@ -59,6 +63,10 @@ function RouteApp() {
                 <Route path={ROUTES.HOME.HOME} element={<DashboardLayout />}>
                     <Route index element={<Navigate to={ROUTES.HOME.DASHBOARD} replace />} />
                     <Route path={ROUTES.HOME.DASHBOARD} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.DASHBOARD) === 'No' ? <NoAccess /> : <Home />}</Suspense>} />
+                    <Route path={ROUTES.HOME.DASHBOARD_DETAIL.COTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.DASHBOARD) === 'No' ? <NoAccess /> : <DashboardCotsDetail />}</Suspense>} />
+                    <Route path={ROUTES.HOME.DASHBOARD_DETAIL.COMPLAINTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.DASHBOARD) === 'No' ? <NoAccess /> : <DashboardComplaintsDetail />}</Suspense>} />
+                    <Route path={ROUTES.HOME.DASHBOARD_DETAIL.PAYMENTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.DASHBOARD) === 'No' ? <NoAccess /> : <DashboardPaymentsDetail />}</Suspense>} />
+                    <Route path={ROUTES.HOME.DASHBOARD_DETAIL.BOOKINGS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.DASHBOARD) === 'No' ? <NoAccess /> : <DashboardBookingsDetail />}</Suspense>} />
                     <Route path={ROUTES.HOME.PAYMENT_STATUS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.PAYMENT_STATUS) === 'No' ? <NoAccess /> : <PaymentStatus />}</Suspense>} />
                     <Route path={ROUTES.HOME.COMPLAINTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.COMPLAINTS) === 'No' ? <NoAccess /> : <Complaint PageAccess={checkPageAccess(ROUTES.HOME.COMPLAINTS)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.ADMISSION.LIST} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.LIST) === 'No' ? <NoAccess /> : <AdmissionList PageAccess={checkPageAccess(ROUTES.HOME.ADMISSION.LIST)} />}</Suspense>} />

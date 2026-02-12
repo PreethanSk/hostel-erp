@@ -216,11 +216,14 @@ export default function Index({ PageAccess }: any) {
                       </TableCell>
                     </TableRow>
                   ))
-                ) : !_tableLoading && <TableRow key={0}>
-                  <TableCell align={"center"} colSpan={5}>
-                    <h3 className="text-muted">Data Not Found</h3>
-                  </TableCell>
-                </TableRow>
+                ) : (
+                  !_tableLoading && (
+                    <TableRow key={0}>
+                      <TableCell align={"center"} colSpan={5}>
+                        <h3 className="text-muted">Data Not Found</h3>
+                      </TableCell>
+                    </TableRow>
+                  )
                 )}
                 <SkeletonProviderTables columns={5} visible={_tableLoading} />
               </TableBody>
