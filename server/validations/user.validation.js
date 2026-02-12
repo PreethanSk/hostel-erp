@@ -12,7 +12,7 @@ module.exports.validateRegister = () => {
 module.exports.validateLogin = () => {
     return [
         check('keyUser').trim().not().isEmpty().withMessage('Email or Mobile number required'),
-        check('keyOtp').trim().not().isEmpty().withMessage('OTP required'),
+        check('keyPassword').trim().not().isEmpty().withMessage('Password required'),
     ];
 }
 

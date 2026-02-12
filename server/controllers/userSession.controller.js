@@ -6,6 +6,7 @@ const { formatResponse } = require("../helpers/utility.helper");
 const { Op, col } = require("sequelize");
 const { sendUserOTP } = require("../helpers/otp.helper");
 const db = require('../models');
+const countryModel = db.MasterCountry;
 const { getPagination, getPagingData } = require('../helpers/pagination.helper');
 // const client = require('../config/redisConnect');
 const Users = db.Users;
@@ -36,9 +37,25 @@ exports.userLogin = async (req, res) => {
 
         let emailAndMobileVerify = true;
         let message = 'OTP has been sent to registered mobile number';
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.body.keyUser);
+        const isMobile = /^\d{6,15}$/.test(req.body.keyUser);
+        let loginType = '';
+        if (isEmail) {
+            loginType = 'Email';
+        } else if (isMobile) {
+            loginType = 'Mobile';
+        }
         if (userData.emailVerifiedAt === null || userData.mobileVerifiedAt === null) {
             emailAndMobileVerify = false;
-            await sendUserOTP(userData.id, userData.mobileNumber, userData.emailAddress, userData.fullName, 'LoginEmailMobileVerifyOTP');
+            await sendUserOTP(
+                userData.id,
+                userData.mobileNumber,
+                userData.emailAddress,
+                null,
+                'LoginEmailMobileVerifyOTP',
+                `Your verification OTP is sent to registered ${loginType}:`,
+                loginType
+            );
             message = 'OTP has been sent to registered mobile number and Email ID';
             const response = {
                 uniqueId: userData.uniqueId,

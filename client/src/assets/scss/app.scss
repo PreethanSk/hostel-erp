@@ -1,0 +1,876 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;500;600;700;800;900&display=swap');
+@import "variables";
+@import "bootstrap/scss/bootstrap";
+
+
+/*pages*/
+
+:root {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+html {
+  height: 0 !important;
+}
+
+body {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 1rem;
+}
+
+::selection {
+  color: white !important;
+  background: $black !important;
+}
+
+::-webkit-scrollbar {
+  width: 0.8rem !important;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #ebe6e6 !important;
+  border-radius: 50rem !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #bbb9b5 !important;
+  border-radius: 50rem !important;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-clear-button {
+  display: none;
+}
+
+.Mui-checked {
+  color: #F76D61 !important;
+}
+
+.imageFit {
+  object-fit: cover;
+}
+
+.no-select {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.fs12 {
+  font-size: 0.7rem !important;
+}
+
+.fs14 {
+  font-size: 0.8rem !important;
+}
+
+.fs15 {
+  font-size: 15px !important;
+}
+
+.fs16 {
+  font-size: 16px !important;
+}
+
+.fs18 {
+  font-size: 18px !important;
+}
+
+.statusBgActive {
+  background: #cbffca;
+}
+
+.statusBgInactive {
+  background: #ffdcd9;
+}
+
+.statusBgPending {
+  background: #fafca8;
+}
+
+.bg-gray {
+  background: #f3f3f3;
+}
+
+.bg-field-gray {
+  background: #FAFAFA;
+}
+
+.fontLight {
+  color: #858585;
+}
+
+.fontGreen {
+  color: #0CA54C;
+}
+
+.fontBlue {
+  color: #1594E2;
+}
+
+.fontRed {
+  color: #F34C0F;
+}
+
+.fontOrange {
+  color: #E2AD19;
+}
+
+.cursorPointer {
+  cursor: pointer;
+}
+
+.rounded--1 {
+  border-radius: 1rem;
+}
+
+.rounded--50 {
+  border-radius: 50rem;
+}
+
+.rounded-circle {
+  border-radius: 50% !important;
+}
+
+.swal2-container {
+  z-index: 100000 !important;
+}
+
+
+.subMenu {
+  color: #000;
+  font-size: 14px;
+}
+
+.subMenu:hover {
+  background-color: #fcccc8;
+}
+
+.nav-link {
+  color: #fcccc8;
+  font-size: 14px;
+}
+
+.nav-link:hover {
+  color: white !important;
+  background-color: $primary;
+  padding: 0 !important;
+}
+
+.nav-link.active {
+  color: #fff !important;
+  background-color: unset;
+  padding: 0 !important;
+  filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(134deg) brightness(103%) contrast(107%);
+}
+
+.nav-link.active::before {
+  content: "•";
+  color: white;
+  position: absolute;
+  left: 42%;
+  bottom: -50%;
+  font-size: 18px;
+}
+
+.mob-nav-link {
+  font-size: 14px;
+}
+
+.mob-nav-link:hover {
+  color: white !important;
+  background-color: #f76e618f;
+}
+
+.mob-nav-link.active {
+  font-weight: bold;
+  color: $primary !important;
+  background-color: unset;
+}
+
+.filterDark {
+  filter: brightness(0) saturate(100%) invert(0%) sepia(90%) saturate(7500%) hue-rotate(84deg) brightness(91%) contrast(109%);
+}
+
+.filterWhite {
+  filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(134deg) brightness(103%) contrast(107%);
+}
+
+.filterPrimary {
+  filter: brightness(0) saturate(100%) invert(58%) sepia(61%) saturate(2281%) hue-rotate(321deg) brightness(99%) contrast(95%);
+}
+
+.required::after {
+  content: " *";
+  color: red !important;
+}
+
+.borderLeftPrimary {
+  border-left: 1px solid $primary !important;
+}
+
+.borderBottomDark {
+  border-bottom: 0.5px solid #aeadad;
+}
+
+
+.borderRight {
+  border-right: 1px solid #c7c8c9;
+}
+
+.borderBottomLight {
+  border-bottom: 1.3px solid #DCDCDC;
+}
+
+.borderBottomPrimary {
+  border-bottom: 2px solid $primary;
+}
+
+.table-head-left-radius {
+  border-top-left-radius: 8px !important;
+}
+
+.table-head-right-radius {
+  border-top-right-radius: 8px !important;
+}
+
+.statusInProgress {
+  border-radius: 50rem;
+  border: 1.4px solid #dbca60;
+  background-color: #fafca8;
+  color: #dbca60;
+  font-weight: bold;
+}
+
+.statusSubmitted {
+  border-radius: 50rem;
+  border: 1.4px solid #6091db;
+  background-color: #a8ccfc;
+  color: #6089db;
+  font-weight: bold;
+}
+
+.statusResolved {
+  border-radius: 50rem;
+  border: 1.4px solid #7ee57c;
+  background-color: #cbffca;
+  color: #7ee57c;
+  font-weight: bold;
+}
+
+.statusRejected {
+  border-radius: 50rem;
+  border: 1.4px solid #d9425b;
+  background-color: #ffd2d5;
+  color: #d94265;
+  font-weight: bold;
+}
+
+.statusHold {
+  border-radius: 50rem;
+  border: 1.4px solid #7e4edb;
+  background-color: #e1d2ff;
+  color: #7e4edb;
+  font-weight: bold;
+}
+
+.search-container {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  display: none;
+}
+
+.search-container.show {
+  opacity: 1;
+  transform: scale(1);
+  display: block;
+}
+
+.search-icon {
+  cursor: pointer;
+  transition: transform 0.3s ease-in-out;
+}
+
+.search-icon:hover {
+  transform: scale(1.1);
+}
+
+
+.darkBorder {
+  border: 1.4px solid #000;
+}
+
+.customFieldBorder {
+  border: 1px solid #bbbbbb !important;
+  border-radius: 5px !important;
+  background-color: #F3F3F3 !important;
+}
+
+.tableBorder {
+  border: 1.4px solid #dcdcdc;
+}
+
+.fieldBorder {
+  border: 2px solid #dcdcdc;
+}
+
+.fieldBorderDark {
+  border: 1.4px solid #000;
+}
+
+
+.fieldBorderPrimary {
+  border: 1.4px solid $primary;
+}
+
+.fieldBorderDashed {
+  border: 1.6px dashed #6D6D6D !important;
+}
+
+.fieldBorderDotted.drag-over {
+  border: 1.6px dashed #6D6D6D !important;
+}
+
+.alignCenter {
+  align-content: center !important;
+  text-align: center !important;
+}
+
+.xHiddenScroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+
+.xHiddenScroller::-webkit-scrollbar {
+  display: none;
+}
+
+.xHiddenScroller {
+  scrollbar-width: none;
+}
+
+
+// login  
+.signUpcard {
+  height: 545px;
+  width: 450px;
+  background-color: #FFFFFF;
+  border-radius: 20px;
+}
+
+.log-subhead {
+  font-family: 'Edwardian Script ITC', cursive;
+  margin-left: 150px;
+  font-size: 20px;
+  color: black;
+}
+
+.log-subheadFront {
+  font-family: 'Edwardian Script ITC', cursive;
+  margin-left: 135px;
+  font-size: 31px;
+}
+
+.head {
+  font-weight: 800;
+  font-size: 16px;
+
+}
+
+.desktop-menu {
+  background-color: "#F76D61" !important;
+  width: 65%;
+  height: 86px;
+}
+
+.hearder-link {
+  font-size: 13px;
+}
+
+.header-img {
+  height: 24px;
+  // width:24px;
+}
+
+.admin-content {
+  height: 86px;
+}
+
+.admin-img {
+  height: 28px;
+  width: 28px;
+}
+
+.LoginHeader {
+  font-family: 'Kometenmelodie 2';
+  /* Fallback to cursive */
+  // font-size: 24px;
+}
+
+.Header-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.line-item {
+  font-size: 15px;
+  color: #6D6D6D;
+  font-weight: 400;
+}
+
+.dashSubhead {
+  font-family: 'Edwardian Script ITC', cursive;
+  font-size: 15px;
+  margin-top: -10px;
+  font-weight: 500;
+  margin-left: 80px;
+  color: black;
+  padding: "0";
+
+}
+
+.dashHead {
+  font-family: "Kometenmelodie 2";
+  font-size: 15px;
+}
+
+.cursorPointer {
+  cursor: pointer;
+}
+
+.headId {
+  font-size: 14px;
+  color: #6D6D6D;
+}
+
+.complaintFeild {
+  background-color: #FAFAFA;
+  height: 617px;
+}
+
+.header-complaint {
+  border: none;
+  border-bottom: 1px solid #D2D2D2;
+}
+
+.complaintData {
+  font-size: 15px;
+  color: black;
+  font-weight: 700;
+}
+
+.sub-complaint {
+  font-size: 12px;
+  color: #000000B2;
+}
+
+.room-div {
+  width: 300px;
+}
+
+.info-div {
+  background-color: white;
+  height: 50px;
+}
+
+.location-div {
+  width: 300px;
+}
+
+.raisedby-div {
+  width: 300px;
+}
+
+.mobilenum-div {
+  width: 300px;
+}
+
+.line {
+  height: 30px;
+}
+
+.cmpny-border {
+  border: none;
+  border-right: 1px solid #D2D2D2;
+}
+
+.lable-feild {
+  font-size: 13px;
+  color: #6D6D6D;
+}
+
+.sub-img {
+  height: 103px;
+  width: 103px;
+}
+
+.selectTag {
+  font-size: 16px;
+  width: 210px;
+}
+
+//Admission Page 
+.add-div {
+  background-color: #FAFAFA;
+}
+
+.submenu-div {
+  background-color: black;
+}
+
+.add-submenus {
+  // color: white;
+  font-size: 14px;
+}
+
+.add-info {
+  font-size: 15px;
+  color: black;
+  font-weight: 700
+}
+
+.admperson-img {
+  height: 95px;
+  width: 95px;
+}
+
+.btn-div {
+  bottom: 0;
+  /* This positions it at the bottom of the main div */
+  left: 0;
+  /* Optional: aligns it to the left */
+  right: 0;
+}
+
+.css-161ms7l-MuiButtonBase-root-MuiSwitch-switchBase.Mui-checked+.MuiSwitch-track {
+  background-color: #bbb9b5 !important;
+}
+
+
+.doc-div {
+  border-radius: 10px;
+  border: 1px dashed #000000;
+}
+
+.personDiv {
+  height: 360px;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+.purposeDiv {
+  height: 360px;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+.OtherDiv {
+  height: 360px;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+.canditDiv {
+  height: 360px;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+.dashboardContent {
+  height: 80vh;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+// Branch Menu
+.back {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.branchContentDiv {
+  background-color: white;
+  height: 450px;
+
+}
+
+.BranchMenuName {
+  font-size: 16px;
+  color: #6D6D6D;
+}
+
+.Branchheaderdiv {
+  border-bottom: 1px solid #D2D2D2;
+}
+
+.phtoCont {
+  color: #6D6D6D;
+  font-size: 14px;
+}
+
+.PhtoSection {
+  border: 1px dashed #6D6D6D;
+  border-radius: 10px;
+
+}
+
+.filediv {
+  max-height: 180px;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+.branchBtn {
+  position: absolute;
+}
+
+.branchMainbtn {
+  position: absolute;
+}
+
+.branchImg {
+  height: 45px;
+  width: 52px;
+  border-radius: 10px;
+}
+
+.complaintFeildBranch {
+  background-color: #FAFAFA;
+  height: 615px;
+}
+
+.Branchdetails-div {
+  height: 270px;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+.amenties-div {
+  height: 40vh;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+.checkLable {
+  font-size: 14px;
+}
+
+//Feed Back 
+
+.dialog-subHead {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.checklable {
+  font-size: 15px;
+}
+
+.dialogHeader {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+//Meadia queries  
+
+/* Hide desktop menu in mobile view */
+@media (max-width: 768px) {
+  .desktop-menu {
+    display: none !important;
+  }
+
+  .profileContent {
+    display: none !important;
+  }
+
+  .mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #F76D61;
+  }
+
+  .mobile-menu {
+    position: fixed;
+    top: 100px;
+    left: 0;
+    width: 100%;
+    background-color: #F76D61;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    overflow-y: auto !important;
+    -ms-overflow-style: none !important;
+    scrollbar-width: none;
+  }
+
+  .mobile-menu-item {
+    width: 100%;
+    text-align: center;
+    padding: 15px 0;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+  }
+
+  .mobile-menu-item:hover {
+    background-color: #FCCCC8;
+    color: #333;
+  }
+
+  /* Hide icons in mobile menu */
+  .mobile-menu img {
+    display: none;
+  }
+
+  .mobile-menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobJustify {
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+
+  .mobCenter {
+    text-align: center !important;
+  }
+
+  .mobileShow {
+    display: block !important;
+  }
+
+  .mobileHide {
+    display: none !important;
+  }
+}
+
+/* Show desktop menu in large screens */
+@media (min-width: 769px) {
+
+  .mobile-menu,
+  .mobile-menu-icon {
+    display: none;
+  }
+
+  .desktop-menu {
+    display: flex;
+  }
+}
+
+
+/* Show desktop menu in larger screens */
+
+
+@media only screen and (max-width: 500px) {
+  .bell-mg {
+    display: none;
+  }
+
+  .search-img {
+    display: none;
+  }
+
+  .slectComplaint {
+    width: auto;
+  }
+
+  .location-div {
+    width: auto;
+  }
+
+  .raisedby-div {
+    width: auto;
+  }
+
+  .mobilenum-div {
+    width: auto;
+  }
+
+  .line {
+    height: auto;
+    display: none;
+  }
+
+  .room-div {
+    width: auto;
+  }
+
+  .canditDiv {
+    height: auto;
+  }
+
+  .OtherDiv {
+    height: auto;
+  }
+
+  .purposeDiv {
+    height: auto;
+  }
+
+  .personDiv {
+    height: auto;
+  }
+
+  .complaintFeild {
+    height: auto;
+  }
+
+  .Branchdetails-div {
+    height: auto;
+  }
+
+  .amenties-div {
+    height: auto;
+  }
+
+  .complaintFeildBranch {
+    height: auto;
+  }
+
+  .branchContentDiv {
+    height: auto;
+  }
+
+  .branchBtn {
+    position: static;
+  }
+
+  .branchMainbtn {
+    position: static;
+  }
+
+  .selectTag {
+    width: 100%;
+  }
+}
+
+@media only screen and (max-width: 800px) {
+
+
+  .info-div {
+    flex-wrap: wrap;
+    height: auto;
+  }
+}
+
+@media (max-width: 920px) {
+  .custom-small-device {
+    padding-left: 12px;
+    padding-right: 12px;
+    margin-top: 16px;
+  }
+}
