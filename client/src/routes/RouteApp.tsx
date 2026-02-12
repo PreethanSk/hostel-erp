@@ -96,7 +96,7 @@ function RouteApp() {
                     <Route path={ROUTES.HOME.MASTER.SERVICE_PROVIDER_CATEGORY} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.MASTER.SERVICE_PROVIDER_CATEGORY) === 'No' ? <NoAccess /> : <ServiceProviderCategory PageAccess={checkPageAccess(ROUTES.HOME.MASTER.SERVICE_PROVIDER_CATEGORY)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.MASTER.BULK_UPLOAD} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.MASTER.BULK_UPLOAD) === 'No' ? <NoAccess /> : <BulkUpload PageAccess={checkPageAccess(ROUTES.HOME.MASTER.BULK_UPLOAD)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.USER.ROLE} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.USER.ROLE) === 'No' ? <NoAccess /> : <UserRole PageAccess={checkPageAccess(ROUTES.HOME.USER.ROLE)} />}</Suspense>} />
-                    <Route path={ROUTES.HOME.USER.LIST} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.USER.LIST) === 'No' ? <NoAccess /> : <UserList />}</Suspense>} />
+                    <Route path={ROUTES.HOME.USER.LIST} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.USER.LIST) === 'No' ? <NoAccess /> : <UserList PageAccess={checkPageAccess(ROUTES.HOME.USER.LIST)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.USER.SERVICE_PROVIDER} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.USER.SERVICE_PROVIDER) === 'No' ? <NoAccess /> : <ServiceProvider PageAccess={checkPageAccess(ROUTES.HOME.USER.SERVICE_PROVIDER)} />}</Suspense>} />
                     <Route path="*" element={<NotFound />} />
                 </Route>
