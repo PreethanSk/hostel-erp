@@ -22,6 +22,7 @@ const AdmissionList = lazy(() => import('../pages/admissions'));
 const AdmissionConfirmation = lazy(() => import('../pages/admissions/admissionConfirm'));
 const AdmissionTransfer = lazy(() => import('../pages/admissions/admissionTransfer'));
 const CandidatePayments = lazy(() => import('../pages/admissions/candidatePayments'));
+const CandidatePaymentDetails = lazy(() => import('../pages/admissions/candidatePaymentDetails'));
 const CandidateEbCharges = lazy(() => import('../pages/admissions/ebCharges'));
 const Branch = lazy(() => import('../pages/branch'));
 const FeedBack = lazy(() => import('../pages/feedBack'));
@@ -72,7 +73,8 @@ function RouteApp() {
                     <Route path={ROUTES.HOME.ADMISSION.LIST} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.LIST) === 'No' ? <NoAccess /> : <AdmissionList PageAccess={checkPageAccess(ROUTES.HOME.ADMISSION.LIST)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.ADMISSION.CONFIRMATION} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.CONFIRMATION) === 'No' ? <NoAccess /> : <AdmissionConfirmation PageAccess={checkPageAccess(ROUTES.HOME.ADMISSION.LIST)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.ADMISSION.TRANSFER} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.TRANSFER) === 'No' ? <NoAccess /> : <AdmissionTransfer PageAccess={checkPageAccess(ROUTES.HOME.ADMISSION.TRANSFER)} />}</Suspense>} />
-                    <Route path={ROUTES.HOME.ADMISSION.PAYMENTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.PAYMENTS) === 'No' ? <NoAccess /> : <CandidatePayments />}</Suspense>} />
+                    <Route path={ROUTES.HOME.ADMISSION.PAYMENTS} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.PAYMENTS) === 'No' ? <NoAccess /> : <CandidatePayments PageAccess={checkPageAccess(ROUTES.HOME.ADMISSION.PAYMENTS)} />}</Suspense>} />
+                    <Route path={ROUTES.HOME.ADMISSION.PAYMENTS + "/details"} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.PAYMENTS) === 'No' ? <NoAccess /> : <CandidatePaymentDetails />}</Suspense>} />
                     <Route path={ROUTES.HOME.ADMISSION.EB_CHARGES} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.ADMISSION.EB_CHARGES) === 'No' ? <NoAccess /> : <CandidateEbCharges PageAccess={checkPageAccess(ROUTES.HOME.ADMISSION.EB_CHARGES)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.BRANCH} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.BRANCH) === 'No' ? <NoAccess /> : <Branch PageAccess={checkPageAccess(ROUTES.HOME.BRANCH)} />}</Suspense>} />
                     <Route path={ROUTES.HOME.FEEDBACK} element={<Suspense fallback={Loading}>{checkPageAccess(ROUTES.HOME.FEEDBACK) === 'No' ? <NoAccess /> : <FeedBack PageAccess={checkPageAccess(ROUTES.HOME.FEEDBACK)} />}</Suspense>} />
