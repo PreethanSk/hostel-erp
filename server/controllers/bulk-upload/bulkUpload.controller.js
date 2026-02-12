@@ -64,7 +64,7 @@ router.post('/api/upload-bulk-data-candidate', uploadBulkFile.single('file'), as
 
             const candidateBody = {
                 id: 0,
-                candidateId: `SLHCHE${String(nextNumber++).padStart(4, '0')}` || null,
+                candidateId: `HHCHE${String(nextNumber++).padStart(4, '0')}` || null,
                 name: row['Full Name'],
                 dob: excelDateToJSDate(row['DOB\n(DD/MM/YYYY)']) || null,
                 gender: row.gender || 'F',

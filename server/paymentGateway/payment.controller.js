@@ -35,7 +35,7 @@ const getepayPortal = async (data, config) => {
 const generateMerchantTransactionId = () => {
     const timestamp = Date.now().toString(36);
     const randomStr = Math.random().toString(36).substring(2, 6);
-    return `SLH${timestamp}${randomStr}`?.toUpperCase();
+    return `HH${timestamp}${randomStr}`?.toUpperCase();
 };
 
 exports.gatewayPortalPage = async (req, res) => {

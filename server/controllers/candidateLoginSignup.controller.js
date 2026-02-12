@@ -7,8 +7,6 @@ const { Op, col } = require("sequelize");
 const { sendUserOTP, verifyEmailMobileOTP } = require("../helpers/otp.helper");
 const db = require('../models');
 const { getPagination, getPagingData } = require('../helpers/pagination.helper');
-// const client = require('../config/redisConnect');
-
 
 // exports.candidateLogin = async (req, res) => {
 //     try {
@@ -57,7 +55,7 @@ const { getPagination, getPagingData } = require('../helpers/pagination.helper')
 //                     },
 //                 }
 //             )
-//             // await sendUserOTP(userData.id, userData.countryId, userData.mobileNumber, userData.emailAddress, userData.fullName, 'loginOTP', true, 'Your SLH login verification OTP is:');
+//             // await sendUserOTP(userData.id, userData.countryId, userData.mobileNumber, userData.emailAddress, userData.fullName, 'loginOTP', true, 'Your Hostel Host ERP login verification OTP is:');
 //             // message = 'OTP has been sent to registered mobile number';
 //             const secret = userData.uniqueId + '!@#$%0o%988';
 //             const accessKey = userData.uniqueId + '-' + uuidv4({}, null, 0);
@@ -110,7 +108,6 @@ const { getPagination, getPagingData } = require('../helpers/pagination.helper')
 exports.candidateLogout = async (req, res) => {
     try {
         await db.UserSessions.update({ logoutAt: moment() }, { where: { userId: req.userId } })
-        // await client.del(req.bearerToken)
         //if (sessionExpired) 
         return res.status(200).json(await formatResponse.success('logout'))
 

@@ -2,7 +2,7 @@ const baseRoute = "/";
 
 export let baseApi = "http://localhost:14321/api/";
 if (process.env.NODE_ENV === "production") {
-  baseApi = "https://hostelhiveapi.sysmedac.com/api/";
+  baseApi = "https://api.yourdomain.com/api/";
 }
 
 export const ROUTES = {

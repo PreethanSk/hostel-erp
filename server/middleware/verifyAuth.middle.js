@@ -1,7 +1,6 @@
 const db = require("../models");
 const moment = require("moment");
 const { formatResponse } = require("../helpers/utility.helper");
-// const client = require("../config/redisConnect");
 const userSessionModel = db.UserSessions;
 
 module.exports.verifyToken = async (req, res, next) => {
