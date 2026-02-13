@@ -1,23 +1,60 @@
-import { useNavigate } from "react-router-dom";
-import "./style.scss";
+import { useNavigate } from 'react-router-dom';
+import { Box, Button, Typography } from '@mui/material';
+import { ArrowLeft, FileQuestion } from 'lucide-react';
+import { gray } from '../../theme';
 
-function Index() {
-    const navigate = useNavigate()
-    return <>
-        <div className="text-center my-2">
-            <span className="bg-light border rounded p-1 fs-6" role="button" onClick={() => navigate(-1)}>Go Back</span>
-        </div>
-        <div className="d-flex justify-content-center align-items-center py-5">
-            <div className="position-relative w-100">
-                <div className="notfound">
-                    <div className="notfound-404">
-                        <h3>Oops! Page not found</h3>
-                        <h1><span>4</span><span>0</span><span>4</span></h1>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </>
+export default function NotFound() {
+  const navigate = useNavigate();
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '60vh',
+        textAlign: 'center',
+        p: 3,
+      }}
+    >
+      <Box
+        sx={{
+          width: 80,
+          height: 80,
+          borderRadius: '50%',
+          backgroundColor: gray[100],
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          mb: 3,
+        }}
+      >
+        <FileQuestion size={36} color={gray[400]} />
+      </Box>
+
+      <Typography
+        sx={{ fontSize: '60px', fontWeight: 700, color: gray[200], lineHeight: 1, mb: 1 }}
+      >
+        404
+      </Typography>
+
+      <Typography sx={{ fontSize: '20px', fontWeight: 600, color: gray[800], mb: 1 }}>
+        Page not found
+      </Typography>
+
+      <Typography sx={{ fontSize: '14px', color: gray[500], mb: 4, maxWidth: 400 }}>
+        The page you are looking for doesn't exist or has been moved.
+      </Typography>
+
+      <Button
+        variant="outlined"
+        startIcon={<ArrowLeft size={16} />}
+        onClick={() => navigate(-1)}
+        sx={{ textTransform: 'none', borderColor: gray[300], color: gray[700] }}
+      >
+        Go back
+      </Button>
+    </Box>
+  );
 }
-
-export default Index;

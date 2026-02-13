@@ -1,90 +1,73 @@
 import { useEffect, useState } from "react";
-import { Button, Table, TableBody, TableCell, TableHead, TableRow, Box, MenuItem, Pagination, PaginationItem, Tabs, Tab, LinearProgress, TableContainer } from '@mui/material';
-import { customTableHeader, CustomTableHover, customTableTemplate, getExportEXCEL } from '../../services/HelperService';
-import { IMAGES_ICON } from '../../assets/images/exportImages';
-import { SkeletonProviderTables } from '../../providers/SkeletonProvider';
+import { Button, Box, Tabs, Tab, LinearProgress } from '@mui/material';
+import { getExportEXCEL } from '../../services/HelperService';
 import BranchAmenities from './components/branchAmenities';
 import BranchDetails from './components/branchDetails';
 import BranchRoomsAndCots from './components/roomsAndCots';
 import BranchPhotos from './components/branchPhotos';
 import { getBranchGridList } from '../../models';
-import CustomSelect from '../../components/helpers/CustomSelect';
 import { useStateValue } from "../../providers/StateProvider";
-import CustomSearch from "../../components/helpers/CustomSearch";
-
+import { ArrowLeft, Plus } from 'lucide-react';
+import PageHeader from "../../components/shared/PageHeader";
+import FilterBar from "../../components/shared/FilterBar";
+import DataTable, { Column } from "../../components/shared/DataTable";
+import SearchInput from "../../components/shared/SearchInput";
+import ExportButton from "../../components/shared/ExportButton";
+import StatusBadge from "../../components/shared/StatusBadge";
+import { gray } from "../../theme/tokens";
+import { Typography } from "@mui/material";
 
 export default function Index({ PageAccess }: any) {
-  const [{ }, dispatch]: any = useStateValue()
+  const [{ }, dispatch]: any = useStateValue();
   const [_tableItems, _setTableItems] = useState<any>([]);
   const [_tableTotalCount, _setTableTotalCount] = useState(0);
-  const [_pageList, _setPageList] = useState<any>([]);
   const [_tableLoading, _setTableLoading] = useState(true);
   const [_loading, _setLoading] = useState(false);
   const [_search, _setSearch] = useState('');
-
   const [_editForm, _setEditForm] = useState(false);
-  const [_addScreen, _setAddScreen] = useState(false);
   const [_selectedTab, _setSelectedTab] = useState(1);
   const [_page, _setPage] = useState(1);
-  const [_rowPopup, _setRowPopup] = useState(false);
   const [_rowsPerPage, _setRowsPerPage] = useState(10);
-
-  const handleChangePage = (_event: React.ChangeEvent<unknown>, value: number) => {
-    _setPage(value);
-  }
-
-
-  const validate = { type: { error: false, message: "" } }
-  const [_validate, _setValidate] = useState(validate);
 
   const handleUpdateItem = (item: any) => {
     _setEditForm(true);
-    dispatch({
-      type: "SET_BRANCH_DETAILS",
-      data: { branchDetails: { ...item }, edit: true }
-    })
-  }
+    dispatch({ type: "SET_BRANCH_DETAILS", data: { branchDetails: { ...item }, edit: true } });
+  };
+
   const handleAddNew = () => {
-    handleClearForm()
+    handleClearForm();
     _setEditForm(true);
-  }
+  };
 
   const handleGoBack = () => {
     _setEditForm(false);
     handleClearForm();
-  }
+  };
 
   const handleClearForm = () => {
-    dispatch({
-      type: "SET_BRANCH_DETAILS",
-      data: null
-    })
-    getGridList()
-    _setSelectedTab(1)
+    dispatch({ type: "SET_BRANCH_DETAILS", data: null });
+    getGridList();
+    _setSelectedTab(1);
     _setLoading(false);
     _setEditForm(false);
-  }
-
+  };
 
   const getPrintTableHeadBody = () => {
-    const header = ["S. No", "Branch Name", "Status", "Total Cots", "Cots Vacant", "Cots Occupied", "Contact Person Name", "Mobile Number"];
+    const header = ["S. No", "Branch Name", "Status", "Total Beds", "Beds Vacant", "Beds Occupied", "Contact Person Name", "Mobile Number"];
     const body = _tableItems?.map((item: any, index: number) => [
-      index + 1,
-      item?.branchName,
-      item?.isActive ? "Active" : "Inactive",
+      index + 1, item?.branchName, item?.isActive ? "Active" : "Inactive",
       item?.totalCots?.split(',').filter(Boolean)?.length || 0,
       item?.cotVacant?.split(',').filter(Boolean)?.length || 0,
       item?.cotOccupied?.split(',').filter(Boolean)?.length || 0,
-      item?.contactPerson,
-      item?.mobileNumber
+      item?.contactPerson, item?.mobileNumber
     ]);
-    return { header, body }
-  }
+    return { header, body };
+  };
 
   const exportEXCEL = () => {
     const { header, body } = getPrintTableHeadBody();
-    getExportEXCEL({ header, body, fileName: "Branch" })
-  }
+    getExportEXCEL({ header, body, fileName: "Branch" });
+  };
 
   const getGridList = () => {
     _setTableLoading(true);
@@ -92,130 +75,109 @@ export default function Index({ PageAccess }: any) {
       .then((resp) => {
         if (resp?.data?.status === "success") {
           _setTableItems(resp?.data?.result?.results);
-          _setTableTotalCount(resp?.data?.result?.totalItems)
+          _setTableTotalCount(resp?.data?.result?.totalItems);
         }
       })
       .catch(console.log)
       .finally(() => _setTableLoading(false));
+  };
+
+  useEffect(() => { getGridList(); }, [_page, _rowsPerPage]);
+
+  const filteredItems = _tableItems?.filter((content: any) => {
+    const lowerSearchInput = _search?.toLowerCase()?.trim();
+    return lowerSearchInput === '' || Object?.values(content)?.some((value: any) =>
+      value?.toString()?.toLowerCase()?.includes(lowerSearchInput)
+    );
+  });
+
+  const columns: Column<any>[] = [
+    { id: 'sno', label: 'S.No', width: 60, render: (_row: any, index: number) => (index + 1) + ((_page - 1) * _rowsPerPage) },
+    {
+      id: 'status', label: 'Status', align: 'center', width: 100,
+      render: (row: any) => <StatusBadge status={row?.isActive ? "Active" : "Inactive"} />
+    },
+    {
+      id: 'action', label: 'Action', align: 'center', width: 100,
+      render: (row: any) => PageAccess === 'Write' ? (
+        <Button size="small" onClick={() => handleUpdateItem(row)} sx={{ textTransform: 'none', fontSize: '13px', color: gray[600] }}>Edit</Button>
+      ) : null
+    },
+    { id: 'branch', label: 'Branch', render: (row: any) => row?.branchName },
+    { id: 'totalBeds', label: 'Total Beds', render: (row: any) => row?.totalCots?.split(',').filter(Boolean)?.length || 0 },
+    { id: 'bedsVacant', label: 'Beds Vacant', render: (row: any) => row?.cotVacant?.split(',').filter(Boolean)?.length || 0 },
+    { id: 'bedsOccupied', label: 'Beds Occupied', render: (row: any) => row?.cotOccupied?.split(',').filter(Boolean)?.length || 0 },
+    { id: 'contact', label: 'Contact Person Name', render: (row: any) => row?.contactPerson },
+    { id: 'mobile', label: 'Mobile Number', render: (row: any) => row?.mobileNumber },
+  ];
+
+  if (!_editForm) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <PageHeader title="Branch">
+          {PageAccess === 'Write' && (
+            <Button variant="contained" startIcon={<Plus size={16} />} onClick={handleAddNew}
+              sx={{ textTransform: 'none' }}>Add New</Button>
+          )}
+        </PageHeader>
+
+        <FilterBar>
+          <SearchInput value={_search} onChange={(value: string) => _setSearch(value)} placeholder="Search branches..." />
+          <Box sx={{ flex: 1 }} />
+          <ExportButton onExport={exportEXCEL} />
+        </FilterBar>
+
+        <DataTable
+          columns={columns}
+          data={filteredItems || []}
+          loading={_tableLoading}
+          totalCount={_tableTotalCount}
+          page={_page}
+          rowsPerPage={_rowsPerPage}
+          onPageChange={(p) => _setPage(p)}
+          onRowsPerPageChange={(s) => _setRowsPerPage(s)}
+          emptyTitle="No branches found"
+          emptyDescription="Add a new branch to get started."
+        />
+      </Box>
+    );
   }
 
-  useEffect(() => {
-    getGridList();
-  }, [_page, _rowsPerPage])
-
-  return (<>
-    {!_editForm && <div className="container">
-      <div className="row justify-content-between align-items-center py-3">
-        <div className="col-md-4 my-2">
-          <span className="text-dark fw-bold">Branch </span>
-        </div>
-        <div className="col-md-6 my-2 d-flex justify-content-end align-items-center gap-4">
-          {PageAccess === 'Write' && <Button className="text-capitalize" sx={{ color: "black" }} startIcon={<img height={18} src={IMAGES_ICON.TableNewItemIcon} />} onClick={handleAddNew}>Add New</Button>}
-          <CustomSearch getSearchText={(value: string) => _setSearch(value)} />
-          <img height={24} src={IMAGES_ICON.TableDownloadIcon} role="button" draggable="false" onClick={exportEXCEL} />
-        </div>
-      </div>
-      <TableContainer className="tableBorder rounded">
-        <Table sx={{ ...customTableTemplate }} >
-          <TableHead>
-            <TableRow className="px-2" sx={{ ...customTableHeader }}>
-              <TableCell className="fw-bold">S.No</TableCell>
-              <TableCell className="fw-bold" align="center">Status</TableCell>
-              <TableCell className="fw-bold">Action</TableCell>
-              <TableCell className="fw-bold">Branch</TableCell>
-              <TableCell className="fw-bold">Total Cots</TableCell>
-              <TableCell className="fw-bold">Cots Vacant</TableCell>
-              <TableCell className="fw-bold">Cots Occupied</TableCell>
-              <TableCell className="fw-bold">Contact Person Name</TableCell>
-              <TableCell className="fw-bold">Mobile Number</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {_tableItems?.length > 0 ? (
-              _tableItems?.filter((content: any) => {
-                const lowerSearchInput = _search?.toLowerCase()?.trim();
-                return lowerSearchInput === '' || Object?.values(content)?.some((value) =>
-                  value?.toString()?.toLowerCase()?.includes(lowerSearchInput)
-                );
-              })?.map((item: any, index: number) => (
-                <TableRow key={index} sx={{ ...CustomTableHover }}>
-                  <TableCell>{(index + 1) + ((_page - 1) * _rowsPerPage)}</TableCell>
-                  <TableCell className="text-muted" align="center">
-                    {item?.isActive ?
-                      <span className="fs12 statusBgActive text-success rounded--50 px-3 py-1">Active</span>
-                      : <span className="fs12 statusBgInactive text-danger rounded--50 px-3 py-1">Inactive</span>
-                    }
-                  </TableCell>
-                  <TableCell className="text-muted" align="center">
-                    {PageAccess === 'Write' && <div className="d-flex align-items-center gap-2 justify-content-center" role="button" onClick={() => handleUpdateItem(item)}>
-                      <span>Edit</span>
-                      <img draggable="false" height={16} src={IMAGES_ICON.EditIcon} alt="icon" />
-                    </div>}
-                  </TableCell>
-                  <TableCell className="text-muted text-nowrap">{item?.branchName}</TableCell>
-                  <TableCell className="text-muted text-nowrap">{item?.totalCots?.split(',').filter(Boolean)?.length || 0}</TableCell>
-                  <TableCell className="text-muted text-nowrap">{item?.cotVacant?.split(',').filter(Boolean)?.length || 0}</TableCell>
-                  <TableCell className="text-muted text-nowrap">{item?.cotOccupied?.split(',').filter(Boolean)?.length || 0}</TableCell>
-                  <TableCell className="text-muted text-nowrap">{item?.contactPerson}</TableCell>
-                  <TableCell className="text-muted text-nowrap">{item?.mobileNumber}</TableCell>
-                </TableRow>
-              ))
-            ) : !_tableLoading && (
-              <TableRow>
-                <TableCell className="fs-3 text-muted" align="center" colSpan={9}>Data Not Found</TableCell>
-              </TableRow>
-            )}
-            <SkeletonProviderTables columns={9} visible={_tableLoading} />
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <div className="mt-3 d-flex justify-content-between flex-wrap">
-        <div className="d-flex align-items-center gap-2">
-          <span className='textLightGray fs14 text-nowrap'>Items per page:</span>
-          <CustomSelect padding={'6px'} value={Number(_rowsPerPage)} onChange={(e: any) => _setRowsPerPage(e.target.value)}
-            placeholder={" "} menuItem={[10, 20, 30]?.map((item: any) =>
-              <MenuItem key={item} value={item}>{item}</MenuItem>)} />
-        </div>
-        <Pagination count={Math.ceil(_tableTotalCount / _rowsPerPage) || 0} page={_page} onChange={handleChangePage}
-          size={"small"} color={"primary"}
-          renderItem={(item) => <PaginationItem sx={{ mx: '4px' }} {...item} />} />
-      </div>
-    </div>}
-
-    {_editForm && <>
-      <div className="container py-3">
-        <div className="bg-field-gray  border rounded px-4 py-1">
-          <div className="d-flex align-items-center py-2 borderBottomLight" role="button" onClick={handleGoBack}>
-            <img height={24} draggable={false} src={IMAGES_ICON.BackIcon} />
-            <div className="fw-bold">Back</div>
-          </div>
-          <div className="bg-white my-3">
-            <div className="">
-              <Tabs value={false} selectionFollowsFocus={false}
-                variant="scrollable"
-                scrollButtons
-                allowScrollButtonsMobile={false}
-                className='d-flex align-items-center justify-content-between gap-3 w-100'
-              >
-                <Tab onClick={() => { _setSelectedTab(1); }} className="col-md-3" label={<div className={`${_selectedTab === 1 ? 'text-dark' : ''} ${_selectedTab > 1 ? 'text-primary' : ''} fw-bold`}>Branch Details</div>} />
-                <Tab onClick={() => { _setSelectedTab(2); }} className="col-md-3" label={<div className={`${_selectedTab === 2 ? 'text-dark' : ''} ${_selectedTab > 2 ? 'text-primary' : ''} fw-bold`}>Photos</div>} />
-                <Tab onClick={() => { _setSelectedTab(3); }} className="col-md-3" label={<div className={`${_selectedTab === 3 ? 'text-dark' : ''} ${_selectedTab > 3 ? 'text-primary' : ''} fw-bold`}>Room & Cots</div>} />
-                <Tab onClick={() => { _setSelectedTab(4); }} className="col-md-3" label={<div className={`${_selectedTab === 4 ? 'text-dark' : ''} ${_selectedTab > 4 ? 'text-primary' : ''} fw-bold`}>Amenities</div>} />
-              </Tabs>
-              <Box sx={{ width: '100%' }}>
-                <LinearProgress variant="determinate" value={25 * (_selectedTab - 1)} />
-              </Box>
-
-              <div className="p-4">
-                {_selectedTab === 1 && <BranchDetails handleBack={handleGoBack} handleNext={() => _setSelectedTab(2)} />}
-                {_selectedTab === 2 && <BranchPhotos handleBack={() => _setSelectedTab(1)} handleNext={() => _setSelectedTab(3)} />}
-                {_selectedTab === 3 && <BranchRoomsAndCots handleBack={() => _setSelectedTab(2)} handleNext={() => _setSelectedTab(4)} />}
-                {_selectedTab === 4 && <BranchAmenities handleBack={() => _setSelectedTab(3)} handleNext={handleGoBack} />}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>}
-  </>)
+  return (
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ backgroundColor: gray[50], border: `1px solid ${gray[200]}`, borderRadius: 2, px: 4, py: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', py: 2, borderBottom: `1px solid ${gray[200]}`, cursor: 'pointer' }}
+          onClick={handleGoBack}>
+          <ArrowLeft size={20} />
+          <Typography sx={{ fontWeight: 600, ml: 1 }}>Back</Typography>
+        </Box>
+        <Box sx={{ backgroundColor: '#fff', my: 3 }}>
+          <Tabs value={false} selectionFollowsFocus={false} variant="scrollable" scrollButtons allowScrollButtonsMobile={false}
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 3, width: '100%' }}>
+            <Tab onClick={() => _setSelectedTab(1)} sx={{ flex: 1 }} label={
+              <Typography sx={{ fontWeight: 600, color: _selectedTab === 1 ? gray[900] : _selectedTab > 1 ? 'primary.main' : gray[500] }}>Branch Details</Typography>
+            } />
+            <Tab onClick={() => _setSelectedTab(2)} sx={{ flex: 1 }} label={
+              <Typography sx={{ fontWeight: 600, color: _selectedTab === 2 ? gray[900] : _selectedTab > 2 ? 'primary.main' : gray[500] }}>Photos</Typography>
+            } />
+            <Tab onClick={() => _setSelectedTab(3)} sx={{ flex: 1 }} label={
+              <Typography sx={{ fontWeight: 600, color: _selectedTab === 3 ? gray[900] : _selectedTab > 3 ? 'primary.main' : gray[500] }}>Room & Beds</Typography>
+            } />
+            <Tab onClick={() => _setSelectedTab(4)} sx={{ flex: 1 }} label={
+              <Typography sx={{ fontWeight: 600, color: _selectedTab === 4 ? gray[900] : _selectedTab > 4 ? 'primary.main' : gray[500] }}>Amenities</Typography>
+            } />
+          </Tabs>
+          <Box sx={{ width: '100%' }}>
+            <LinearProgress variant="determinate" value={25 * (_selectedTab - 1)} />
+          </Box>
+          <Box sx={{ p: 4 }}>
+            {_selectedTab === 1 && <BranchDetails handleBack={handleGoBack} handleNext={() => _setSelectedTab(2)} />}
+            {_selectedTab === 2 && <BranchPhotos handleBack={() => _setSelectedTab(1)} handleNext={() => _setSelectedTab(3)} />}
+            {_selectedTab === 3 && <BranchRoomsAndCots handleBack={() => _setSelectedTab(2)} handleNext={() => _setSelectedTab(4)} />}
+            {_selectedTab === 4 && <BranchAmenities handleBack={() => _setSelectedTab(3)} handleNext={handleGoBack} />}
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
 }

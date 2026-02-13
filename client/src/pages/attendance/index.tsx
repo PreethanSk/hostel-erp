@@ -1,348 +1,245 @@
 import { useEffect, useState } from "react";
-import { Button, Checkbox, FormControlLabel, Table, TableBody, TableCell, TableHead, TableRow, TextField, MenuItem, Pagination, PaginationItem } from '@mui/material';
-import { CustomAlert, customRadio, customTableHeader, CustomTableHover, customTableTemplate, getExportEXCEL, textFieldStyle } from '../../services/HelperService';
-import { IMAGES_ICON } from '../../assets/images/exportImages';
-import { SkeletonProviderTables } from '../../providers/SkeletonProvider';
-import { getCandidateAdmissionById, getCandidateAttendanceGridList, insertUpdateCandidateBlackList } from '../../models';
-import CustomSelect from '../../components/helpers/CustomSelect';
-import CustomDialogue from "../../components/helpers/CustomDialogue";
+import { Button, TextField, Box, Typography, Divider } from '@mui/material';
+import Grid2 from '@mui/material/Grid2';
+import { CustomAlert, getExportEXCEL } from '../../services/HelperService';
+import { getCandidateAdmissionById, getCandidateAttendanceGridList } from '../../models';
 import { useStateValue } from "../../providers/StateProvider";
-import CustomSearch from "../../components/helpers/CustomSearch";
-
+import { ArrowLeft, Plus, Eye } from 'lucide-react';
+import PageHeader from "../../components/shared/PageHeader";
+import FilterBar from "../../components/shared/FilterBar";
+import DataTable, { Column } from "../../components/shared/DataTable";
+import SearchInput from "../../components/shared/SearchInput";
+import ExportButton from "../../components/shared/ExportButton";
+import FormField from "../../components/shared/FormField";
+import { gray } from "../../theme/tokens";
 
 export default function Index() {
-    const [{ user }]: any = useStateValue()
-    const [_tableItems, _setTableItems] = useState<any>([]);
-    const [_tableTotalCount, _setTableTotalCount] = useState(0);
-    const [_pageList, _setPageList] = useState<any>([]);
-    const [_tableLoading, _setTableLoading] = useState(true);
-    const [_loading, _setLoading] = useState(false);
-    const [_search, _setSearch] = useState('');
+  const [{ user }]: any = useStateValue();
+  const [_tableItems, _setTableItems] = useState<any>([]);
+  const [_tableTotalCount, _setTableTotalCount] = useState(0);
+  const [_tableLoading, _setTableLoading] = useState(true);
+  const [_loading, _setLoading] = useState(false);
+  const [_search, _setSearch] = useState('');
+  const [_view, _setView] = useState(false);
+  const [_editForm, _setEditForm] = useState(false);
+  const [_formData, _setFormData] = useState<any>({ id: 0 });
+  const [_page, _setPage] = useState(1);
+  const [_rowsPerPage, _setRowsPerPage] = useState(10);
+  const [_notes, _setNotes] = useState('');
 
-    const [_searchCandidate, _setSearchCandidate] = useState('');
-    const [_view, _setView] = useState(false);
-    const [_editForm, _setEditForm] = useState(false);
-    const [_candidateList, _setCandidateList] = useState<any>([]);
-    const [_formData, _setFormData] = useState<any>({ id: 0, blackListed: "", blackListedReason: "", informToParents: false, informToLocalGuardian: false, isActive: true })
-    const [_page, _setPage] = useState(1);
-    const [_rowPopup, _setRowPopup] = useState(false);
-    const [_rowsPerPage, _setRowsPerPage] = useState(10);
+  const handleAddNew = () => {
+    handleClearForm();
+    _setEditForm(true);
+  };
 
-    const handleChangePage = (_event: React.ChangeEvent<unknown>, value: number) => {
-        _setPage(value);
-    }
+  const handleGoBack = () => {
+    _setEditForm(false);
+    handleClearForm();
+  };
 
+  const handleClearForm = () => {
+    getGridList();
+    _setView(false);
+    _setLoading(false);
+    _setEditForm(false);
+    _setNotes('');
+    _setFormData({ id: 0 });
+  };
 
-    const validate = { type: { error: false, message: "" } }
-    const [_validate, _setValidate] = useState(validate);
+  const getPrintTableHeadBody = () => {
+    const header = ["S. No", "Resident Name", "Status"];
+    const body = _tableItems?.map((item: any, index: number) => [index + 1, item?.name, item?.isActive]);
+    return { header, body };
+  };
 
-    const changeFormData = (key: string, value: any) => {
-        _setFormData({ ..._formData, [key]: value });
-    }
+  const exportEXCEL = () => {
+    const { header, body } = getPrintTableHeadBody();
+    getExportEXCEL({ header, body, fileName: "Attendance" });
+  };
 
-    // const handleSearchCandidate = () => {
-    //     if (!_searchCandidate?.trim()) {
-    //         return
-    //     }
-    //     _setLoading(true)
-    //     getCandidateDetailSearch(_searchCandidate)
-    //         .then((resp) => {
-    //             if (resp?.data?.status === "success") {
-    //                 if (!resp?.data?.result?.length) {
-    //                     CustomAlert("error", "Candidate not found")
-    //                 } else {
-    //                     _setCandidateList([...resp?.data?.result])
-    //                 }
-    //             }
-    //         })
-    //         .catch((err) => console.log(err))
-    //         .finally(() => _setLoading(false))
-    // }
+  const handleViewCandidate = (item: any) => {
+    _setEditForm(true);
+    _setView(true);
+    handleSelectCandidate(item);
+  };
 
-    const handleAddNew = () => {
-        handleClearForm()
-        _setEditForm(true);
-    }
-
-    const handleGoBack = () => {
-        _setEditForm(false);
-        handleClearForm();
-    }
-
-    const handleClearForm = () => {
-        getGridList()
-        _setView(false)
-        _setSearchCandidate('')
-        _setLoading(false);
-        _setEditForm(false);
-        _setFormData({ id: 0, blackListed: "", blackListedReason: "", informToParents: false, informToLocalGuardian: false, isActive: true });
-    }
-
-
-    const getPrintTableHeadBody = () => {
-        const header = ["S. No", "Candidate Name", "Status"];
-        const body = _tableItems?.map((item: any, index: number) => [index + 1, item?.name, item?.isActive]);
-        return { header, body }
-    }
-
-    const exportEXCEL = () => {
-        const { header, body } = getPrintTableHeadBody();
-        getExportEXCEL({ header, body, fileName: "Attendance" })
-    }
-
-
-    const handleViewCandidate = (item: any) => {
-        _setEditForm(true)
-        _setView(true)
-        handleSelectCandidate(item)
-    }
-
-    const handleSubmitForm = () => {
-        _setLoading(true)
-        const body = {
-            id: _formData?.id || 0,
-            blackListed: "yes",
-            blackListedBy: (user?.firstName + " " + user?.lastName),
-            blackListedReason: _formData?.blackListedReason || "",
-            informToParents: _formData?.informToParents || false,
-            informToLocalGuardian: _formData?.informToLocalGuardian || false
+  const handleSelectCandidate = (item: any) => {
+    getCandidateAdmissionById(item?.id)
+      .then((resp) => {
+        if (resp?.data?.status === "success") {
+          const data = resp?.data?.result?.length ? resp?.data?.result[0] : { ...resp?.data?.result };
+          _setFormData({
+            ..._formData, ...item,
+            dateOfAdmission: data?.dateOfAdmission,
+            cotNumber: data?.cotNumber,
+            roomNumber: data?.roomNumber,
+            branchName: data?.branchName,
+          });
         }
+      })
+      .catch((err) => console.log(err));
+  };
 
-        insertUpdateCandidateBlackList(body)
-            .then((resp) => {
-                if (resp?.data?.status === "success") {
-                    CustomAlert("success", "Candidate added as blacklisted")
-                    handleClearForm();
-                }
-            })
-            .catch((err) => console.log(err))
-            .finally(() => _setLoading(false))
+  const getGridList = () => {
+    _setTableLoading(true);
+    getCandidateAttendanceGridList(_page, _rowsPerPage)
+      .then((resp) => {
+        if (resp?.data?.status === "success") {
+          _setTableItems(resp?.data?.result?.results);
+          _setTableTotalCount(resp?.data?.result?.totalItems);
+        }
+      })
+      .catch(console.log)
+      .finally(() => _setTableLoading(false));
+  };
 
-    }
+  useEffect(() => { getGridList(); }, [_page, _rowsPerPage]);
 
-    const handleSelectCandidate = (item: any) => {
-        _setCandidateList([]);
-        getCandidateAdmissionById(item?.id)
-            .then((resp) => {
-                if (resp?.data?.status === "success") {
-                    const data = resp?.data?.result?.length ? resp?.data?.result[0] : { ...resp?.data?.result }
-                    _setFormData({
-                        ..._formData, ...item,
-                        dateOfAdmission: data?.dateOfAdmission,
-                        cotNumber: data?.cotNumber,
-                        roomNumber: data?.roomNumber,
-                        branchName: data?.branchName,
-                    })
-                }
-            })
-            .catch((err) => console.log(err))
-    }
+  const filteredItems = _tableItems?.filter((content: any) => {
+    const lowerSearchInput = _search?.toLowerCase()?.trim();
+    return lowerSearchInput === '' || Object?.values(content)?.some((value: any) =>
+      value?.toString()?.toLowerCase()?.includes(lowerSearchInput)
+    );
+  });
 
-    const getGridList = () => {
-        _setTableLoading(true);
-        getCandidateAttendanceGridList(_page, _rowsPerPage)
-            .then((resp) => {
-                if (resp?.data?.status === "success") {
-                    _setTableItems(resp?.data?.result?.results);
-                    _setTableTotalCount(resp?.data?.result?.totalItems)
-                }
-            })
-            .catch(console.log)
-            .finally(() => _setTableLoading(false));
-    }
+  const columns: Column<any>[] = [
+    { id: 'sno', label: 'S.No', width: 60, render: (_row: any, index: number) => (index + 1) + ((_page - 1) * _rowsPerPage) },
+    {
+      id: 'view', label: 'View', align: 'center', width: 60,
+      render: (row: any) => (
+        <Button size="small" onClick={() => handleViewCandidate(row)}
+          sx={{ minWidth: 'auto', p: 0.5, color: gray[500] }}>
+          <Eye size={16} />
+        </Button>
+      )
+    },
+    { id: 'location', label: 'Location', render: (row: any) => row?.location || "-" },
+    { id: 'candidateId', label: 'Resident ID', render: (row: any) => row?.candidateId || "-" },
+    { id: 'name', label: 'Resident Name', render: (row: any) => row?.candidateName || "-" },
+    { id: 'mobile', label: 'Mobile No', render: (row: any) => row?.mobileNumber || "-" },
+    { id: 'outDate', label: 'Out Date', render: (row: any) => row?.date || "-" },
+    { id: 'outTime', label: 'Out Time', render: (row: any) => row?.outTime || "-" },
+    { id: 'inDate', label: 'In Date', render: (row: any) => row?.date || "-" },
+    { id: 'inTime', label: 'In Time', render: (row: any) => row?.inTime || "-" },
+  ];
 
-    useEffect(() => {
-        getGridList();
-    }, [])
+  // List View
+  if (!_editForm) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <PageHeader title="Attendance" description="Track resident check-in and check-out">
+          <Button variant="contained" startIcon={<Plus size={16} />} onClick={handleAddNew}
+            sx={{ textTransform: 'none' }}>Add New</Button>
+        </PageHeader>
 
-    return (<>
-        {!_editForm && <div className="container">
-            <div className="row justify-content-between align-items-center py-3">
-                <div className="col-md-4 my-2">
-                    <span className="text-dark fw-bold">Attendance</span>
-                </div>
-                <div className="col-md-6 my-2 d-flex justify-content-end align-items-center gap-4">
-                    <Button className="text-capitalize" sx={{ color: "black" }} startIcon={<img height={18} src={IMAGES_ICON.TableNewItemIcon} />} onClick={handleAddNew}>Add New</Button>
-                    <CustomSearch getSearchText={(value: string) => _setSearch(value)} />
-                    <img height={24} src={IMAGES_ICON.TableDownloadIcon} role="button" draggable="false" onClick={exportEXCEL} />
-                </div>
-            </div>
-            <Table sx={{ ...customTableTemplate }} >
-                <TableHead>
-                    <TableRow className="px-2" sx={{ ...customTableHeader }}>
-                        <TableCell className="fw-bold text-nowrap">S.No</TableCell>
-                        <TableCell className="fw-bold text-nowrap">View</TableCell>
-                        <TableCell className="fw-bold text-nowrap">Location</TableCell>
-                        <TableCell className="fw-bold text-nowrap">Candidate Id</TableCell>
-                        <TableCell className="fw-bold text-nowrap">Candidate Name</TableCell>
-                        <TableCell className="fw-bold text-nowrap">Mobile No</TableCell>
-                        <TableCell className="fw-bold text-nowrap">Out Date</TableCell>
-                        <TableCell className="fw-bold text-nowrap">Out Time</TableCell>
-                        <TableCell className="fw-bold text-nowrap">In Date</TableCell>
-                        <TableCell className="fw-bold text-nowrap">In Time</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {_tableItems?.length > 0 ? (
-                        _tableItems?.map((item: any, index: number) => (
-                            <TableRow key={index} sx={{ ...CustomTableHover }}>
-                                <TableCell>{(index + 1) + ((_page - 1) * _rowsPerPage)}</TableCell>
-                                <TableCell className="text-muted text-nowrap">
-                                    <img className="filterPrimary" src={IMAGES_ICON.EyeIcon} alt="View" role="button" onClick={() => handleViewCandidate(item)} />
-                                </TableCell>
-                                <TableCell className="text-muted text-nowrap">{item.location || '-'}</TableCell>
-                                <TableCell className="text-muted text-nowrap">{item.candidateId || '-'}</TableCell>
-                                <TableCell className="text-muted text-nowrap">{item.candidateName || '-'}</TableCell>
-                                <TableCell className="text-muted text-nowrap">{item.mobileNumber}</TableCell>
-                                <TableCell className="text-muted text-nowrap">{item.date}</TableCell>
-                                <TableCell className="text-muted text-nowrap">{item.outTime}</TableCell>
-                                <TableCell className="text-muted text-nowrap">{item.date}</TableCell> {/* Assuming same as Out Date */}
-                                <TableCell className="text-muted text-nowrap">{item.inTime}</TableCell>
-                            </TableRow>
-                        ))
-                    ) : !_tableLoading && (
-                        <TableRow>
-                            <TableCell className="fs-3 text-muted" align="center" colSpan={10}>Data Not Found</TableCell>
-                        </TableRow>
-                    )}
-                    <SkeletonProviderTables columns={10} visible={_tableLoading} />
-                </TableBody>
-            </Table>
-            <div className="mt-3 d-flex justify-content-between flex-wrap">
-                <div className="d-flex align-items-center gap-2">
-                    <span className='textLightGray fs14 text-nowrap'>Items per page:</span>
-                    <CustomSelect padding={'6px'} value={Number(_rowsPerPage)} onChange={(e: any) => _setRowsPerPage(e.target.value)}
-                        placeholder={" "} menuItem={[10, 20, 30]?.map((item: any) =>
-                            <MenuItem key={item} value={item}>{item}</MenuItem>)} />
-                </div>
-                <Pagination count={Math.ceil(_tableTotalCount / _rowsPerPage) || 0} page={_page} onChange={handleChangePage}
-                    size={"small"} color={"primary"}
-                    renderItem={(item) => <PaginationItem sx={{ mx: '4px' }} {...item} />} />
-            </div>
-        </div>}
+        <FilterBar>
+          <SearchInput value={_search} onChange={(value: string) => _setSearch(value)} placeholder="Search attendance..." />
+          <Box sx={{ flex: 1 }} />
+          <ExportButton onExport={exportEXCEL} />
+        </FilterBar>
 
-        {_editForm && <>
-            <div className="container py-3">
-                <div className="bg-field-gray  border rounded px-4 py-1">
-                    <div className="d-flex align-items-center py-2 borderBottomLight" role="button" onClick={handleGoBack}>
-                        <img height={24} draggable={false} src={IMAGES_ICON.BackIcon} />
-                        <div className="fw-bold">Back</div>
-                    </div>
-                    <div className="bg-white my-3 px-2">
-                        {_formData?.id ? <>
-                            {!_view && <hr />}
-                            <div className="row align-items-center">
-                                <div className="col-md-3 my-3">
-                                    <div className="text-muted fs14 mb-1">Candidate Id</div>
-                                    <TextField fullWidth sx={{ ...textFieldStyle }} value={_formData?.candidateId}
-                                        InputProps={{ readOnly: true }} />
-                                </div>
-                                <div className=""></div>
-                                <div className="col-md-3 my-3">
-                                    <div className="text-muted fs14 mb-1">Name</div>
-                                    <TextField fullWidth sx={{ ...textFieldStyle }} value={_formData?.name}
-                                        InputProps={{ readOnly: true }} />
-                                </div>
-                                <div className="col-md-3 my-3">
-                                    <div className="text-muted fs14 mb-1">Mobile Number</div>
-                                    <TextField fullWidth sx={{ ...textFieldStyle }} value={_formData?.mobileNumber}
-                                        InputProps={{ readOnly: true }} />
-                                </div>
-                                <div className="col-md-3 my-3">
-                                    <div className="text-muted fs14 mb-1">Email</div>
-                                    <TextField fullWidth sx={{ ...textFieldStyle }} value={_formData?.email}
-                                        InputProps={{ readOnly: true }} />
-                                </div>
-                                <div className=""></div>
-                                <div className="col-md-3 my-3">
-                                    <div className="text-muted fs14 mb-1">Branch</div>
-                                    <TextField fullWidth sx={{ ...textFieldStyle }} value={_formData?.branchName}
-                                        InputProps={{ readOnly: true }} />
-                                </div>
-                                <div className="col-md-3 my-3">
-                                    <div className="text-muted fs14 mb-1">Room Number</div>
-                                    <TextField fullWidth sx={{ ...textFieldStyle }} value={_formData?.roomNumber}
-                                        InputProps={{ readOnly: true }} />
-                                </div>
-                                <div className="col-md-3 my-3">
-                                    <div className="text-muted fs14 mb-1">Cot Number</div>
-                                    <TextField fullWidth sx={{ ...textFieldStyle }} value={_formData?.cotNumber}
-                                        InputProps={{ readOnly: true }} />
-                                </div>
-                                <div className=""></div>
-                                <div className="col-md-3 my-3">
-                                    <div className="text-muted fs14 mb-1">Date of Admission</div>
-                                    <TextField fullWidth sx={{ ...textFieldStyle }} value={_formData?.dateOfAdmission}
-                                        InputProps={{ readOnly: true }} />
-                                </div>
-                                <div className="col-md-3 my-3">
-                                    <div className="text-muted fs14 mb-1">Date of Vacate</div>
-                                    <TextField fullWidth sx={{ ...textFieldStyle }} value={_formData?.dateOfVacate}
-                                        InputProps={{ readOnly: true }} />
-                                </div>
-                                <div className="col-md-3 my-3">
-                                    <FormControlLabel value={!_formData?.informToParents} control={<Checkbox size="small" sx={{ ...customRadio }} />} label="Informed to Parents"
-                                        onClick={() => changeFormData("informToParents", !_formData?.informToParents)} />
-                                </div>
-                                <div className="col-md-3 my-3">
-                                    <FormControlLabel value={!_formData?.informToLocalGuardian} control={<Checkbox size="small" sx={{ ...customRadio }} />} label="Informed to Local Guardian"
-                                        onClick={() => changeFormData("informToLocalGuardian", !_formData?.informToLocalGuardian)} />
-                                </div>
-                                <div className="col-md-6 my-3">
-                                    <div className="text-muted fs14 mb-1">Reason</div>
-                                    <TextField fullWidth sx={{ ...textFieldStyle }} value={_formData?.blackListedReason}
-                                        onChange={(e) => changeFormData("blackListedReason", e.target.value)} />
-                                </div>
-                            </div>
-                        </> : <></>}
-                    </div>
+        <DataTable
+          columns={columns}
+          data={filteredItems || []}
+          loading={_tableLoading}
+          totalCount={_tableTotalCount}
+          page={_page}
+          rowsPerPage={_rowsPerPage}
+          onPageChange={(p) => _setPage(p)}
+          onRowsPerPageChange={(s) => { _setRowsPerPage(s); _setPage(1); }}
+          emptyTitle="No attendance records found"
+          emptyDescription="No attendance data available."
+        />
+      </Box>
+    );
+  }
 
-                    {!_view ? <div className="row">
+  // Edit/View Form
+  return (
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ backgroundColor: gray[50], border: `1px solid ${gray[200]}`, borderRadius: 2, px: 4, py: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', py: 2, borderBottom: `1px solid ${gray[200]}`, cursor: 'pointer' }}
+          onClick={handleGoBack}>
+          <ArrowLeft size={20} />
+          <Typography sx={{ fontWeight: 600, ml: 1 }}>Back</Typography>
+        </Box>
 
-                        <div className="text-muted"> Branch</div>
-                        <hr />
+        <Box sx={{ backgroundColor: 'white', my: 3, p: 2, borderRadius: 1 }}>
+          {_formData?.id ? (
+            <Grid2 container spacing={3}>
+              <Grid2 size={{ xs: 12, md: 3 }}>
+                <FormField label="Resident ID">
+                  <TextField fullWidth size="small" value={_formData?.candidateId || ''}
+                    slotProps={{ input: { readOnly: true } }} />
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, md: 3 }}>
+                <FormField label="Name">
+                  <TextField fullWidth size="small" value={_formData?.name || ''}
+                    slotProps={{ input: { readOnly: true } }} />
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, md: 3 }}>
+                <FormField label="Mobile Number">
+                  <TextField fullWidth size="small" value={_formData?.mobileNumber || ''}
+                    slotProps={{ input: { readOnly: true } }} />
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, md: 3 }}>
+                <FormField label="Email">
+                  <TextField fullWidth size="small" value={_formData?.email || ''}
+                    slotProps={{ input: { readOnly: true } }} />
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, md: 3 }}>
+                <FormField label="Branch">
+                  <TextField fullWidth size="small" value={_formData?.branchName || ''}
+                    slotProps={{ input: { readOnly: true } }} />
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, md: 3 }}>
+                <FormField label="Room Number">
+                  <TextField fullWidth size="small" value={_formData?.roomNumber || ''}
+                    slotProps={{ input: { readOnly: true } }} />
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, md: 3 }}>
+                <FormField label="Bed Number">
+                  <TextField fullWidth size="small" value={_formData?.cotNumber || ''}
+                    slotProps={{ input: { readOnly: true } }} />
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, md: 3 }}>
+                <FormField label="Date of Admission">
+                  <TextField fullWidth size="small" value={_formData?.dateOfAdmission || ''}
+                    slotProps={{ input: { readOnly: true } }} />
+                </FormField>
+              </Grid2>
+            </Grid2>
+          ) : null}
+        </Box>
 
-                        <div className="col-md-8 mb-2">
-                            <TextField sx={{ ...textFieldStyle }} className="" fullWidth placeholder="Add Notes" />
-                        </div>
-                        <div className="col-md-4 mb-2">
-                            <div className="d-flex align-items-center justify-content-end mobJustify gap-2">
-                                {/* <FormControlLabel label="Active"
-                                    control={<Checkbox className="text-capitalize" checked={_formData?.isActive}
-                                        onChange={() => changeFormData('isActive', !_formData?.isActive)} />} /> */}
-                                <Button variant="contained" color="primary" disabled={_loading || !_formData?.id} className="" onClick={handleSubmitForm}>Save</Button>
-                                <Button className="text-capitalize" sx={{ color: "black" }} onClick={handleClearForm}>Clear</Button>
-                            </div>
-                        </div>
-                    </div> : <></>}
-                </div>
-            </div>
-        </>}
-        <CustomDialogue displaySize={"md"} title={'Select Candidate'} dialogueFlag={_candidateList?.length > 0} onCloseClick={() => _setCandidateList([])}
-            mainContent={<div className="my-2">
-                <Table size="small" sx={{ ...customTableTemplate }} >
-                    <TableHead>
-                        <TableRow className="px-2" sx={{ ...customTableHeader }}>
-                            <TableCell className="fw-bold text-nowrap"></TableCell>
-                            <TableCell className="fw-bold text-nowrap">Candidate Id</TableCell>
-                            <TableCell className="fw-bold text-nowrap">Name</TableCell>
-                            <TableCell className="fw-bold text-nowrap">Email</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {_candidateList?.map((item: any, index: number) =>
-                            <TableRow key={index}>
-                                <TableCell>
-                                    {item?.CandidateDetails?.blackListed === "yes" ?
-                                        <Button className="" size="small" variant="contained" color="error">Blocked</Button> :
-                                        <Button className="" size="small" variant="outlined" color="secondary" onClick={() => handleSelectCandidate(item)}>Select</Button>}
-                                </TableCell>
-                                <TableCell className="text-muted text-nowrap">{item?.candidateId}</TableCell>
-                                <TableCell className="text-muted text-nowrap">{item?.name}</TableCell>
-                                <TableCell className="text-muted text-nowrap">{item?.email}</TableCell>
-                            </TableRow>)}
-                    </TableBody>
-                </Table>
-            </div>} />
-    </>)
+        {!_view && (
+          <Box>
+            <Typography variant="body2" sx={{ color: gray[500], mb: 1 }}>Branch</Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Grid2 container spacing={3} sx={{ alignItems: 'center', mb: 2 }}>
+              <Grid2 size={{ xs: 12, md: 8 }}>
+                <TextField size="small" fullWidth placeholder="Add Notes"
+                  value={_notes} onChange={(e) => _setNotes(e.target.value)} />
+              </Grid2>
+              <Grid2 size={{ xs: 12, md: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
+                  <Button variant="contained" color="primary" disabled={_loading || !_formData?.id}
+                    sx={{ textTransform: 'none', px: 4 }}>Save</Button>
+                  <Button variant="outlined" onClick={handleClearForm}
+                    sx={{ textTransform: 'none', px: 4, color: 'black', borderColor: gray[300] }}>Clear</Button>
+                </Box>
+              </Grid2>
+            </Grid2>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
 }

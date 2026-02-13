@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useStateValue } from "../../../providers/StateProvider";
-import { CustomAlert, textFieldStyle } from "../../../services/HelperService";
+import { CustomAlert } from "../../../services/HelperService";
 import { CustomAutoSelect } from "../../../components/helpers/CustomSelect";
-import { Button, styled, TextField } from "@mui/material";
-import { commonUploadFile, getCandidateDocument, insertUpdateCandidateDocuments, } from "../../../models";
-import { IMAGES_ICON } from "../../../assets/images/exportImages";
-import CustomDialogue from "../../../components/helpers/CustomDialogue";
+import { Button, styled, TextField, Typography, Box, IconButton } from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
+import { commonUploadFile, getCandidateDocument, insertUpdateCandidateDocuments } from "../../../models";
 import { ROUTES } from "../../../configs/constants";
+import { Upload, Eye, PlusCircle, MinusCircle } from "lucide-react";
+import FormField from "../../../components/shared/FormField";
+import DialogModal from "../../../components/shared/DialogModal";
+import { gray } from "../../../theme/tokens";
 
 const Input = styled("input")({ display: "none" });
 
@@ -16,10 +19,7 @@ export default function Documents({ handleBack, handleNext }: any) {
   const [_loading, _setLoading] = useState(false);
   const [_previewImage, _setPreviewImage] = useState("");
   const [_documentList, _setDocumentList] = useState<any>([]);
-  const [_confirmDelete, _setConfirmDelete] = useState<{
-    open: boolean;
-    index: number | null;
-  }>({ open: false, index: null });
+  const [_confirmDelete, _setConfirmDelete] = useState<{ open: boolean; index: number | null }>({ open: false, index: null });
 
   const changeDocumentList = (index: number, key: string, value: any) => {
     const _tempArr = [..._documentList];
@@ -27,67 +27,28 @@ export default function Documents({ handleBack, handleNext }: any) {
     _setDocumentList([..._tempArr]);
   };
 
-  // Validation functions for document numbers
-  // const validateAadhaar = (value: string) => {
-  //   // Aadhaar should be exactly 12 digits
-  //   const aadhaarRegex = /^\d{12}$/;
-  //   return aadhaarRegex.test(value);
-  // };
-
-  // const validatePassport = (value: string) => {
-  //   // Passport should be exactly 8 alphanumeric characters
-  //   const passportRegex = /^[A-Z0-9]{8}$/;
-  //   return passportRegex.test(value);
-  // };
-
   const handleDocumentNumberChange = (index: number, value: string) => {
     const document = _documentList[index];
     const documentType = document?.documentName;
     let processedValue = value.toUpperCase();
-
     if (documentType === "Aadhaar") {
-      // For Aadhaar, only allow digits and limit to 12 characters
       processedValue = value.replace(/\D/g, '').slice(0, 12);
     } else if (documentType === "Passport") {
-      // For Passport, only allow alphanumeric and limit to 8 characters
       processedValue = value.replace(/[^A-Z0-9]/gi, '').slice(0, 8);
     }
-
     changeDocumentList(index, "documentNumber", processedValue);
   };
-
-  const validate = {
-    documentName: { error: false, message: "" },
-    documentNumber: { error: false, message: "" },
-    documentUrl: { error: false, message: "" },
-  };
-
-  const [_validate, _setValidate] = useState(validate);
 
   const addMoreDocuments = () => {
     _setDocumentList([
       ..._documentList,
       {
-        id: 0,
-        admissionRefId: admissionDetails?.admissionDetails?.id || 0,
+        id: 0, admissionRefId: admissionDetails?.admissionDetails?.id || 0,
         candidateRefId: admissionDetails?.admissionDetails?.candidateRefId || 0,
-        documentName: "",
-        documentNumber: "",
-        documentUrl: "",
-        isActive: true,
+        documentName: "", documentNumber: "", documentUrl: "", isActive: true,
       },
     ]);
   };
-
-  // const removeDocuments = (index: number) => {
-  //   const _tempArr = [..._documentList];
-  //   if (_tempArr.at(index)?.id) {
-  //     _tempArr[index].isActive = false;
-  //   } else {
-  //     _tempArr.splice(index, 1);
-  //   }
-  //   _setDocumentList(_tempArr);
-  // };
 
   const onUpload = async (files: any, index: number) => {
     _setLoading(true);
@@ -97,74 +58,31 @@ export default function Documents({ handleBack, handleNext }: any) {
       .then((response) => {
         if (response.status === 200) {
           changeDocumentList(index, "documentUrl", response?.data?.file);
-          refDocuments.current.forEach((input) => {
-            if (input && input.type === "file") {
-              input.value = "";
-            }
-          });
+          refDocuments.current.forEach((input) => { if (input && input.type === "file") input.value = ""; });
           refDocuments.current = [];
         }
       })
-      .catch((error) => {
-        console.log(error.response);
-      })
+      .catch((error) => console.log(error.response))
       .finally(() => _setLoading(false));
   };
 
   const handlePreviewUpload = (item: any) => {
-    if (item?.documentUrl) {
-      _setPreviewImage(item.documentUrl);
-    } else {
-      CustomAlert("warning", "No document/image uploaded to preview.");
-    }
+    if (item?.documentUrl) _setPreviewImage(item.documentUrl);
+    else CustomAlert("warning", "No document/image uploaded to preview.");
   };
+
   const handleSubmitForm = () => {
-    if (!_documentList?.length) {
-      CustomAlert("warning", "Document requried")
-      return
-    }
+    if (!_documentList?.length) { CustomAlert("warning", "Document required"); return; }
     if (_documentList?.length) {
       let valid = true;
       _documentList?.filter((doc: any) => doc.isActive !== false)?.forEach((element: any) => {
-        if (!element?.documentName) {
-          valid = false
-          return;
-        }
-        if (!element?.documentNumber) {
-          valid = false
-          return;
-        }
-        if (!element?.documentUrl) {
-          valid = false
-          return;
-        }
-
-        // // Validate document number format based on document type
-        // if (element?.documentName === "Aadhaar" && !validateAadhaar(element?.documentNumber)) {
-        //   CustomAlert("warning", "Aadhaar number must be exactly 12 digits");
-        //   valid = false
-        //   return;
-        // }
-        // if (element?.documentName === "Passport" && !validatePassport(element?.documentNumber)) {
-        //   CustomAlert("warning", "Passport number must be exactly 8 alphanumeric characters");
-        //   valid = false
-        //   return;
-        // }
+        if (!element?.documentName || !element?.documentNumber || !element?.documentUrl) { valid = false; return; }
       });
-      if (!valid) {
-        CustomAlert("warning", "Document list missing some fields or has invalid format")
-        return
-      }
+      if (!valid) { CustomAlert("warning", "Document list missing some fields or has invalid format"); return; }
     }
     _setLoading(true);
-    const body = { documents: _documentList };
-    insertUpdateCandidateDocuments(body)
-      .then((resp) => {
-        if (resp?.data?.status === "success") {
-          CustomAlert("success", "Documents details saved");
-          handleNext();
-        }
-      })
+    insertUpdateCandidateDocuments({ documents: _documentList })
+      .then((resp) => { if (resp?.data?.status === "success") { CustomAlert("success", "Documents details saved"); handleNext(); } })
       .catch(console.log)
       .finally(() => _setLoading(false));
   };
@@ -173,183 +91,144 @@ export default function Documents({ handleBack, handleNext }: any) {
     getCandidateDocument(admissionDetails?.admissionDetails?.candidateRefId)
       .then((resp) => {
         if (resp?.data?.status === "success") {
-          if (!resp?.data?.result?.length) {
-            addMoreDocuments();
-          } else {
-            _setDocumentList([...resp?.data?.result]);
-          }
+          if (!resp?.data?.result?.length) addMoreDocuments();
+          else _setDocumentList([...resp?.data?.result]);
         }
       })
-      .catch((err) => console.log(err));
+      .catch(console.log);
   };
 
+  useEffect(() => { getDocumentDetails(); }, []);
   useEffect(() => {
-    getDocumentDetails();
-  }, []);
-
-
-  useEffect(() => {
-    if (_documentList.filter((doc: any) => doc.isActive !== false).length === 0) {
-      addMoreDocuments();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (_documentList.filter((doc: any) => doc.isActive !== false).length === 0) addMoreDocuments();
   }, [_documentList]);
 
-  const handleRemoveDocument = (index: number) => {
-    _setConfirmDelete({ open: true, index });
-  };
+  const handleRemoveDocument = (index: number) => { _setConfirmDelete({ open: true, index }); };
 
   const confirmRemoveDocument = () => {
     if (_confirmDelete.index !== null) {
       const index = _confirmDelete.index;
       const _tempArr = [..._documentList];
-      if (_tempArr.at(index)?.id) {
-        _tempArr[index].isActive = false;
-      } else {
-        _tempArr.splice(index, 1);
-      }
+      if (_tempArr.at(index)?.id) _tempArr[index].isActive = false;
+      else _tempArr.splice(index, 1);
       _setDocumentList([..._tempArr]);
     }
     _setConfirmDelete({ open: false, index: null });
   };
 
-  const cancelRemoveDocument = () => {
-    _setConfirmDelete({ open: false, index: null });
-  };
-
   return (
     <>
-      <div className="">
-        <div className="row">
-          <div className="fw-bold">Document Details</div>
-          <div className="col-md-3 mt-4">
-            <div className="text-muted fs14 mb-1 required">Document Type</div>
-          </div>
-          <div className="col-md-3 mt-4">
-            <div className="text-muted fs14 mb-1 required">Document Number</div>
-          </div>
-          <div className="col-md-4 mt-4">
-            <div className="text-muted fs14 mb-1 required">Upload Document</div>
-          </div>
-        </div>
+      <Box>
+        <Typography sx={{ fontWeight: 600, mb: 2 }}>Document Details</Typography>
+
+        <Grid2 container spacing={3} sx={{ mb: 1 }}>
+          <Grid2 size={{ xs: 12, md: 3 }}>
+            <Typography variant="body2" sx={{ fontSize: '12px', fontWeight: 500, color: gray[700] }}>Document Type *</Typography>
+          </Grid2>
+          <Grid2 size={{ xs: 12, md: 3 }}>
+            <Typography variant="body2" sx={{ fontSize: '12px', fontWeight: 500, color: gray[700] }}>Document Number *</Typography>
+          </Grid2>
+          <Grid2 size={{ xs: 12, md: 3 }}>
+            <Typography variant="body2" sx={{ fontSize: '12px', fontWeight: 500, color: gray[700] }}>Upload Document *</Typography>
+          </Grid2>
+        </Grid2>
+
         {_documentList?.filter((doc: any) => doc.isActive !== false)
           .map((mItem: any, idx: number, arr: any[]) => {
             const isLast = idx === arr.length - 1;
             const mIndex = _documentList.findIndex((d: any) => d === mItem);
             return (
-              <div key={mIndex} className="row align-items-center">
-                <div className="col-md-3 my-3">
+              <Grid2 container spacing={3} key={mIndex} sx={{ alignItems: 'center', mb: 1 }}>
+                <Grid2 size={{ xs: 12, md: 3 }}>
                   <CustomAutoSelect
                     value={mItem?.documentName}
-                    error={_validate.documentName.error}
-                    helperText={_validate.documentName.message}
-                    onChange={(value: any) => {
-                      changeDocumentList(mIndex, "documentName", value || "");
-                    }}
-                    placeholder={"Document type"}
-                    menuItem={["Aadhaar", "Passport"]?.map((item: any) => {
-                      return { title: item, value: item };
-                    })}
-                  />
-                </div>
-                <div className="col-md-3 my-3">
-                  <TextField
-                    fullWidth
-                    sx={{ ...textFieldStyle }}
+                    onChange={(value: any) => changeDocumentList(mIndex, "documentName", value || "")}
+                    placeholder="Document type"
+                    menuItem={["Aadhaar", "Passport"]?.map((item: any) => ({ title: item, value: item }))} />
+                </Grid2>
+                <Grid2 size={{ xs: 12, md: 3 }}>
+                  <TextField fullWidth size="small"
                     value={mItem?.documentNumber}
                     onChange={(e: any) => handleDocumentNumberChange(mIndex, e.target.value)}
-                    error={_validate.documentNumber.error}
-                    helperText={_validate.documentNumber.message}
-                    placeholder={mItem?.documentName === "Aadhaar" ? "12 digits only" : mItem?.documentName === "Passport" ? "8 alphanumeric" : "Document number"}
-                  />
-                </div>
-                <div className="col-md-3 my-3">
-                  <div className="customFieldBorder px-2 py-1">
-                    <div className="d-flex justify-content-between align-items-center w-100">
-                      <div className={`fs14 w-75 text-truncate ${mItem?.documentUrl ? "text-dark" : "text-muted"}`}>
-                        {mItem?.documentUrl || "Upload Document"}
-                      </div>
-                      <div className="d-flex gap-2 align-items-center py-1">
-                        {mItem?.documentUrl?.length > 0 && <img draggable={false} src={IMAGES_ICON.EyeIcon} alt="View" role="button" onClick={(e: any) => { e.stopPropagation(); handlePreviewUpload(mItem); }} />}
-                        <img draggable={false} src={IMAGES_ICON.UploadIcon} alt="Upload" role="button" onClick={() => refDocuments.current[mIndex]?.click()} />
-                      </div>
-                    </div>
-                    <Input style={{ visibility: "hidden" }} accept={"image/*"} type="file" ref={(el) => (refDocuments.current[mIndex] = el)} onChange={(e: any) => onUpload(e.target.files, mIndex)} />
-                  </div>
-                </div>
-                <div className="col-md-3 my-3">
-                  <div className="d-flex align-items-center gap-2">
+                    placeholder={mItem?.documentName === "Aadhaar" ? "12 digits only" : mItem?.documentName === "Passport" ? "8 alphanumeric" : "Document number"} />
+                </Grid2>
+                <Grid2 size={{ xs: 12, md: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, border: `1px solid ${gray[300]}`, borderRadius: 1, px: 1.5, py: 0.75 }}>
+                    <Typography variant="body2" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: mItem?.documentUrl ? 'text.primary' : gray[400], fontSize: '14px' }}>
+                      {mItem?.documentUrl || "Upload Document"}
+                    </Typography>
+                    {mItem?.documentUrl?.length > 0 && (
+                      <IconButton size="small" onClick={(e: any) => { e.stopPropagation(); handlePreviewUpload(mItem); }}>
+                        <Eye size={16} color={gray[500]} />
+                      </IconButton>
+                    )}
+                    <IconButton size="small" onClick={() => refDocuments.current[mIndex]?.click()}>
+                      <Upload size={16} color={gray[500]} />
+                    </IconButton>
+                    <Input style={{ visibility: "hidden", position: 'absolute' }} accept="image/*" type="file"
+                      ref={(el) => (refDocuments.current[mIndex] = el)} onChange={(e: any) => onUpload(e.target.files, mIndex)} />
+                  </Box>
+                </Grid2>
+                <Grid2 size={{ xs: 12, md: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {_documentList?.filter((doc: any) => doc.isActive !== false)?.length > 0 && (
-                      <img draggable={false} src={IMAGES_ICON.RemoveIcon} alt="Remove" role="button" onClick={() => handleRemoveDocument(mIndex)} style={{ cursor: "pointer", filter: "grayscale(1)", opacity: 0.7, }} />
+                      <IconButton size="small" onClick={() => handleRemoveDocument(mIndex)}>
+                        <MinusCircle size={20} color={gray[500]} />
+                      </IconButton>
                     )}
                     {isLast && (
-                      <img draggable={false} src={IMAGES_ICON.AddMoreIcon} alt="Add" role="button" onClick={addMoreDocuments} />
+                      <IconButton size="small" color="primary" onClick={addMoreDocuments}>
+                        <PlusCircle size={20} />
+                      </IconButton>
                     )}
-                  </div>
-                </div>
-              </div>
+                  </Box>
+                </Grid2>
+              </Grid2>
             );
           })}
-        { }
-        {_documentList.filter((doc: any) => doc.isActive !== false).length ===
-          0 && (
-            <div className="row align-items-center">
-              <div className="col-md-3 my-3"></div>
-              <div className="col-md-3 my-3"></div>
-              <div className="col-md-3 my-3"></div>
-              <div className="col-md-3 my-3">
-                <div className="d-flex align-items-center gap-2">
-                  <img draggable={false} src={IMAGES_ICON.AddMoreIcon} alt="Add" role="button" onClick={addMoreDocuments} />
-                </div>
-              </div>
-            </div>
-          )}
-        <div className="mt-4 d-flex align-items-center justify-content-end mobJustify gap-3">
-          <Button className="px-4 bg-white text-capitalize" variant="outlined" sx={{ color: "black" }} disabled={_loading} onClick={handleBack}>Back</Button>
-          <Button className="px-4" variant="contained" color="primary" disabled={_loading} onClick={handleSubmitForm}>Next</Button>
-        </div>
-      </div>
 
-      <CustomDialogue
-        displaySize={"md"}
-        title="Document Preview"
-        dialogueFlag={!!_previewImage}
-        onCloseClick={() => _setPreviewImage("")}
-        mainContent={
-          <div className="my-2">
-            {_previewImage ? (
-              _previewImage.match(/\.(pdf)$/i) ? (
-                <iframe src={ROUTES.API.DOWNLOAD_FILE + _previewImage}
-                  title="PDF Preview" width="100%" height="500px" style={{ border: 0 }} />
-              ) : (
-                <img src={ROUTES.API.DOWNLOAD_FILE + _previewImage}
-                  alt="Image Preview" draggable="false" className="w-100" style={{ maxHeight: 400, objectFit: "contain" }}
-                  onError={(e) => (e.currentTarget.style.display = "none")} />
-              )
-            ) : (
-              <div className="text-center text-muted">No preview available</div>
-            )}
-          </div>
-        }
-      />
+        {_documentList.filter((doc: any) => doc.isActive !== false).length === 0 && (
+          <Box sx={{ mt: 2 }}>
+            <IconButton size="small" color="primary" onClick={addMoreDocuments}>
+              <PlusCircle size={20} />
+            </IconButton>
+          </Box>
+        )}
 
-      <CustomDialogue
-        displaySize={"xs"}
-        title="Delete Document"
-        dialogueFlag={_confirmDelete.open}
-        onCloseClick={cancelRemoveDocument}
-        mainContent={
-          <div className="my-2">
-            <div className="mb-3">
-              Are you sure you want to delete this document?
-            </div>
-            <div className="d-flex justify-content-end gap-3">
-              <Button variant="outlined" color="primary" className="px-4 py-1 text-dark" onClick={cancelRemoveDocument}>Cancel</Button>
-              <Button variant="contained" color="error" className="px-4 py-1" onClick={confirmRemoveDocument}>Delete</Button>
-            </div>
-          </div>
-        }
-      />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+          <Button variant="outlined" disabled={_loading} onClick={handleBack}
+            sx={{ textTransform: 'none', px: 4, color: 'black', borderColor: gray[300] }}>Back</Button>
+          <Button variant="contained" color="primary" disabled={_loading} onClick={handleSubmitForm}
+            sx={{ textTransform: 'none', px: 4 }}>Next</Button>
+        </Box>
+      </Box>
+
+      <DialogModal open={!!_previewImage} onClose={() => _setPreviewImage("")} title="Document Preview" maxWidth="md">
+        {_previewImage ? (
+          _previewImage.match(/\.(pdf)$/i) ? (
+            <iframe src={ROUTES.API.DOWNLOAD_FILE + _previewImage} title="PDF Preview" width="100%" height="500px" style={{ border: 0 }} />
+          ) : (
+            <img src={ROUTES.API.DOWNLOAD_FILE + _previewImage} alt="Image Preview" draggable={false}
+              style={{ width: '100%', maxHeight: 400, objectFit: 'contain' }}
+              onError={(e) => (e.currentTarget.style.display = "none")} />
+          )
+        ) : (
+          <Typography variant="body2" sx={{ textAlign: 'center', color: gray[500] }}>No preview available</Typography>
+        )}
+      </DialogModal>
+
+      <DialogModal open={_confirmDelete.open} onClose={() => _setConfirmDelete({ open: false, index: null })}
+        title="Delete Document" maxWidth="xs"
+        actions={
+          <>
+            <Button variant="outlined" onClick={() => _setConfirmDelete({ open: false, index: null })}
+              sx={{ textTransform: 'none', color: 'black', borderColor: gray[300] }}>Cancel</Button>
+            <Button variant="contained" color="error" onClick={confirmRemoveDocument}
+              sx={{ textTransform: 'none' }}>Delete</Button>
+          </>
+        }>
+        <Typography variant="body2">Are you sure you want to delete this document?</Typography>
+      </DialogModal>
     </>
   );
 }

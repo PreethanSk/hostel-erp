@@ -1,30 +1,29 @@
-import { useEffect, useState } from "react";
-import moment from "moment";
-import { getBranchGridList, getDashboardBookings, getDashboardBookingsDetail, getDashboardComplaints, getDashboardComplaintsDetail, getDashboardCotsDetail, getDashboardPayments, getDashboardPaymentsDetail, } from "../../models";
-import { CustomFilterMultiSelect, } from "../../components/helpers/CustomSelect";
-import DateRangeSelector from "../../components/helpers/DateRangeSelector";
-import DashboardPaymentsDetailModal from "../dashboardDetail/dashboard-payments-detail";
-import DashboardBookingsDetailModal from "../dashboardDetail/dashboard-bookings-detail";
-import DashboardCotsDetailModal from "../dashboardDetail/dashboard-cots-detail";
-import DashboardComplaintsDetailModal from "../dashboardDetail/dashboard-complaints-detail";
-import { Skeleton } from "@mui/material";
-
-interface DataCardProps {
-  title: string;
-  value: string | number;
-  colorClass: string;
-  loading: boolean;
-  onClick: () => void;
-}
-
-const DataCard: React.FC<DataCardProps> = ({ title, value, colorClass, onClick, loading }) => (
-  <div className="col-md-3 my-2">
-    <div className="bg-gray rounded shadow-sm p-2 cursor-pointer border" onClick={onClick} role="button">
-      <div className={`mb-2 fs14 fw-bold ${colorClass}`}>{title}</div>
-      {loading ? <Skeleton className="rounded" variant="rectangular" height={20} /> : <div className="fw-bold fs18">{value}</div>}
-    </div>
-  </div>
-);
+import { useEffect, useState } from 'react';
+import Grid from '@mui/material/Grid2';
+import moment from 'moment';
+import { Bed, Percent, IndianRupee, AlertCircle } from 'lucide-react';
+import {
+  getBranchGridList,
+  getDashboardBookings,
+  getDashboardBookingsDetail,
+  getDashboardComplaints,
+  getDashboardComplaintsDetail,
+  getDashboardCotsDetail,
+  getDashboardPayments,
+  getDashboardPaymentsDetail,
+} from '../../models';
+import { CustomFilterMultiSelect } from '../../components/helpers/CustomSelect';
+import DateRangeSelector from '../../components/helpers/DateRangeSelector';
+import DashboardPaymentsDetailModal from '../dashboardDetail/dashboard-payments-detail';
+import DashboardBookingsDetailModal from '../dashboardDetail/dashboard-bookings-detail';
+import DashboardCotsDetailModal from '../dashboardDetail/dashboard-cots-detail';
+import DashboardComplaintsDetailModal from '../dashboardDetail/dashboard-complaints-detail';
+import { PageHeader, StatsCard } from '../../components/shared';
+import { primary, success, error as errorColor, info } from '../../theme';
+import OccupancyDonut from './OccupancyDonut';
+import RevenueBarChart from './RevenueBarChart';
+import ComplaintsQuickTable from './ComplaintsQuickTable';
+import AdmissionsQuickTable from './AdmissionsQuickTable';
 
 interface DashboardData {
   payments?: Record<string, number>;
@@ -39,66 +38,56 @@ interface Branch {
 }
 
 interface ModalState {
-  type: "payments" | "bookings" | "cots" | "complaints" | null;
+  type: 'payments' | 'bookings' | 'cots' | 'complaints' | null;
   dataType: string;
-  params: {
-    fromDate: string;
-    toDate: string;
-    branchId: string;
-  };
+  params: { fromDate: string; toDate: string; branchId: string };
 }
 
 export default function Dashboard() {
-  const [_dashboardData, _setDashboardData] = useState<DashboardData>({});
-  const [_dashboardDataDetail, _setDashboardDataDetail] = useState<any>({});
+  const [dashboardData, setDashboardData] = useState<DashboardData>({});
+  const [dashboardDataDetail, setDashboardDataDetail] = useState<any>({});
   const [branchList, setBranchList] = useState<Branch[]>([]);
-  const [filterData, setFilterData] = useState<{ branchList: number[] }>({
-    branchList: [],
-  });
+  const [filterData, setFilterData] = useState<{ branchList: number[] }>({ branchList: [] });
   const [dateRange, setDateRange] = useState({
-    fromDate: moment().startOf("month").format("YYYY-MM-DD"),
-    toDate: moment().format("YYYY-MM-DD"),
+    fromDate: moment().startOf('month').format('YYYY-MM-DD'),
+    toDate: moment().format('YYYY-MM-DD'),
   });
-
   const [detailModal, setDetailModal] = useState<ModalState>({
     type: null,
-    dataType: "",
-    params: { fromDate: "", toDate: "", branchId: "" },
+    dataType: '',
+    params: { fromDate: '', toDate: '', branchId: '' },
   });
+  const [loading, setLoading] = useState({ cots: true, complaints: true, payments: true, bookings: true });
 
-  const [_loading, _setLoading] = useState({ cots: true, complaints: true, payments: true, bookings: true });
-  const loadData = async (key: string, fn: any, query: any): Promise<void> => {
+  const loadData = async (key: string, fn: any, query: string): Promise<void> => {
     try {
-      _setLoading((prev) => ({ ...prev, [key]: true }));
-
+      setLoading((prev) => ({ ...prev, [key]: true }));
       const response = await fn(query);
-
-      _setDashboardDataDetail((prev: any) => ({
+      setDashboardDataDetail((prev: any) => ({
         ...prev,
         [`${key}Detail`]: response?.data?.result || {},
       }));
     } catch (err) {
-      console.error(`Error loading ${String(key)}:`, err);
+      console.error(`Error loading ${key}:`, err);
     } finally {
-      _setLoading((prev) => ({ ...prev, [key]: false }));
+      setLoading((prev) => ({ ...prev, [key]: false }));
     }
   };
 
   const fetchDashboardData = async () => {
-    const branchIdParam = filterData.branchList.length > 0 ? `branchId=${filterData.branchList.join(",")}&` : "";
+    const branchIdParam = filterData.branchList.length > 0 ? `branchId=${filterData.branchList.join(',')}&` : '';
     const query = `?${branchIdParam}from=${dateRange.fromDate}&to=${dateRange.toDate}`;
+
     const [complaints, payments, bookings] = await Promise.allSettled([
-      // getDashboardCots(query),
       getDashboardComplaints(query),
       getDashboardPayments(query),
       getDashboardBookings(query),
     ]);
 
-    _setDashboardData({
-      // cots: cots.status === "fulfilled" ? cots.value?.data?.result || {} : {},
-      complaints: complaints.status === "fulfilled" ? complaints.value?.data?.result || {} : {},
-      payments: payments.status === "fulfilled" ? payments.value?.data?.result || {} : {},
-      bookings: bookings.status === "fulfilled" ? bookings.value?.data?.result || {} : {},
+    setDashboardData({
+      complaints: complaints.status === 'fulfilled' ? complaints.value?.data?.result || {} : {},
+      payments: payments.status === 'fulfilled' ? payments.value?.data?.result || {} : {},
+      bookings: bookings.status === 'fulfilled' ? bookings.value?.data?.result || {} : {},
     });
 
     await Promise.all([
@@ -108,327 +97,184 @@ export default function Dashboard() {
       loadData('bookings', getDashboardBookingsDetail, query),
     ]);
 
-    // try {
-    //   const [cotsDetail, complaintsDetail, paymentsDetail, bookingsDetail] =
-    //     await Promise.allSettled([
-    //       getDashboardCotsDetail(query),
-    //       getDashboardComplaintsDetail(query),
-    //       getDashboardPaymentsDetail(query),
-    //       getDashboardBookingsDetail(query),
-    //     ]);
-    //   _setDashboardDataDetail({
-    //     cotsDetail: cotsDetail.status === "fulfilled" ? cotsDetail?.value?.data?.result || {} : {},
-    //     complaintsDetail: complaintsDetail.status === "fulfilled" ? complaintsDetail?.value?.data?.result || {} : {},
-    //     paymentsDetail: paymentsDetail.status === "fulfilled" ? paymentsDetail?.value?.data?.result || {} : {},
-    //     bookingsDetail: bookingsDetail.status === "fulfilled" ? bookingsDetail?.value?.data?.result || {} : {},
-    //   });
-    // } catch (error) {
-    // } finally {
-    // }
-
     try {
       const branchRes = await getBranchGridList();
-      if (branchRes?.data?.status === "success") {
+      if (branchRes?.data?.status === 'success') {
         setBranchList(branchRes.data.result.results);
       }
     } catch (err) {
-      console.error("Error fetching branches", err);
+      console.error('Error fetching branches', err);
     }
   };
 
-  const openDetailModal = (type: ModalState["type"], dataType: string) => {
+  const openDetailModal = (type: ModalState['type'], dataType: string) => {
     setDetailModal({
       type,
       dataType,
       params: {
         fromDate: dateRange.fromDate,
         toDate: dateRange.toDate,
-        branchId: filterData.branchList.join(","),
+        branchId: filterData.branchList.join(','),
       },
     });
   };
 
   const closeModal = () => {
-    setDetailModal({ type: null, dataType: "", params: detailModal.params });
+    setDetailModal({ type: null, dataType: '', params: detailModal.params });
   };
 
   useEffect(() => {
     fetchDashboardData();
   }, [filterData, dateRange]);
 
+  // KPI computations
+  const cotsDetail = dashboardDataDetail?.cotsDetail || {};
+  const totalBeds = cotsDetail?.totalCots?.length || 0;
+  const occupied = cotsDetail?.occupied?.length || 0;
+  const available = cotsDetail?.available?.length || 0;
+  const occupancyRate = totalBeds > 0 ? Math.round((occupied / totalBeds) * 100) : 0;
+  const totalPaid = dashboardData?.payments?.totalPaid || 0;
+  const totalPending = dashboardData?.payments?.totalPending || 0;
+  const openComplaints = (dashboardData?.complaints?.Open || 0) + (dashboardData?.complaints?.InProgress || 0);
+  const newComplaints = dashboardData?.complaints?.Open || 0;
 
   return (
     <>
-      <div className="bg-white">
-        <div className="container">
-          <div className="fw-bold row align-items-center">
-            <div className="col-md-6 fs18">Dashboard</div>
-            <div className="col-md-6">
-              <div className="row align-items-center">
-                <div className="col-md-3 my-2">
-                  <CustomFilterMultiSelect className="bg-white"
-                    value={filterData.branchList}
-                    onChange={(e: React.ChangeEvent<{ value: number[] }>) => {
-                      const selected = e.target.value as number[];
-                      setFilterData({ ...filterData, branchList: selected });
-                      // const branchIdParam =
-                      //   selected.length > 0
-                      //     ? `branchId=${selected.join(",")}&`
-                      //     : "";
-                      // const query = `?${branchIdParam}from=${dateRange.fromDate}&to=${dateRange.toDate}`;
+      {/* Page Header with Filters */}
+      <PageHeader title="Dashboard" description="Today's overview of hostel operations">
+        <CustomFilterMultiSelect
+          value={filterData.branchList}
+          onChange={(e: React.ChangeEvent<{ value: number[] }>) => {
+            setFilterData({ ...filterData, branchList: e.target.value as number[] });
+          }}
+          placeholder="Branch"
+          menuItem={branchList.map((item) => ({
+            title: item.branchName,
+            value: Number(item.id),
+          }))}
+        />
+        <DateRangeSelector
+          handleChangeDate={(fromDate: string, toDate: string) => {
+            setDateRange({ fromDate, toDate });
+          }}
+        />
+      </PageHeader>
 
-                      // Promise.allSettled([
-                      //   getDashboardCots(query),
-                      //   getDashboardComplaints(query),
-                      //   getDashboardPayments(query),
-                      //   getDashboardBookings(query),
-                      //   getDashboardCotsDetail(query),
-                      //   getDashboardComplaintsDetail(query),
-                      //   getDashboardPaymentsDetail(query),
-                      //   getDashboardBookingsDetail(query),
-                      // ])
-                      //   .then((
-                      //     [cots, complaints, payments, bookings, cotsDetail, complaintsDetail, paymentsDetail, bookingsDetail,]
-                      //   ) => {
-                      //     _setDashboardData({
-                      //       cots: cots.status === "fulfilled" ? cots.value?.data?.result || {} : {},
-                      //       complaints: complaints.status === "fulfilled" ? complaints.value?.data?.result || {} : {},
-                      //       payments: payments.status === "fulfilled" ? payments.value?.data?.result || {} : {},
-                      //       bookings: bookings.status === "fulfilled" ? bookings.value?.data?.result || {} : {},
-                      //     });
-                      //     _setDashboardDataDetail({
-                      //       cotsDetail: cotsDetail.status === "fulfilled" ? cotsDetail?.value?.data?.result || {} : {},
-                      //       complaintsDetail: complaintsDetail.status === "fulfilled" ? complaintsDetail?.value?.data?.result || {} : {},
-                      //       paymentsDetail: paymentsDetail.status === "fulfilled" ? paymentsDetail?.value?.data?.result || {} : {},
-                      //       bookingsDetail: bookingsDetail.status === "fulfilled" ? bookingsDetail?.value?.data?.result || {} : {},
-                      //     });
-                      //   })
-                    }}
-                    placeholder={"Branch"}
-                    menuItem={branchList.map((item) => ({
-                      title: item.branchName,
-                      value: Number(item.id),
-                    }))}
-                  />
-                </div>
-                <div className="col-md-9 my-2 d-flex align-items-center">
-                  <DateRangeSelector
-                    className="bg-white w-100"
-                    handleChangeDate={(fromDate: string, toDate: string) => { setDateRange({ fromDate, toDate }); }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* KPI Row */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatsCard
+            label="Total Beds"
+            value={totalBeds}
+            icon={<Bed size={20} />}
+            accentColor={info[500]}
+            loading={loading.cots}
+            trend={{ value: `${available} available`, direction: 'neutral' }}
+            onClick={() => openDetailModal('cots', 'totalCots')}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatsCard
+            label="Occupancy"
+            value={`${occupancyRate}%`}
+            icon={<Percent size={20} />}
+            accentColor={success[500]}
+            loading={loading.cots}
+            trend={{ value: `${occupied} occupied`, direction: occupancyRate >= 50 ? 'up' : 'down' }}
+            onClick={() => openDetailModal('cots', 'occupied')}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatsCard
+            label="Revenue"
+            value={`₹${totalPaid.toLocaleString('en-IN')}`}
+            icon={<IndianRupee size={20} />}
+            accentColor={success[500]}
+            loading={loading.payments}
+            trend={{ value: `₹${totalPending.toLocaleString('en-IN')} pending`, direction: totalPending > 0 ? 'down' : 'up' }}
+            onClick={() => openDetailModal('payments', 'totalPayments')}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatsCard
+            label="Open Issues"
+            value={openComplaints}
+            icon={<AlertCircle size={20} />}
+            accentColor={openComplaints > 0 ? errorColor[500] : success[500]}
+            loading={loading.complaints}
+            trend={{ value: `${newComplaints} new`, direction: newComplaints > 0 ? 'up' : 'neutral' }}
+            onClick={() => openDetailModal('complaints', 'Open')}
+          />
+        </Grid>
+      </Grid>
 
-          <div className="row">
-            <div className="col-md-6 my-2">
-              {/* PAYMENTS */}
-              <div className="row">
-                <div className="fw-bold fs18 mt-4">PAYMENTS</div>
-                <DataCard
-                  title="Total Payments"
-                  loading={_loading?.payments}
-                  value={`₹ ${_dashboardData?.payments?.totalPayments || 0}`}
-                  colorClass="fontGreen"
-                  onClick={() => openDetailModal("payments", "totalPayments")}
-                />
-                <DataCard
-                  title="Paid"
-                  loading={_loading?.payments}
-                  value={`₹ ${_dashboardData?.payments?.totalPaid || 0}`}
-                  colorClass="fontBlue"
-                  onClick={() => openDetailModal("payments", "paid")}
-                />
-                {/* <DataCard
-              title="Token Advance"
-              value={`₹ ${_dashboardData?.payments?.totalAdvance || 0}`}
-              colorClass="fontBlue"
-              onClick={() => openDetailModal("payments", "advance")}
-            /> */}
-                <DataCard
-                  title="Pending"
-                  loading={_loading?.payments}
-                  value={`₹ ${_dashboardData?.payments?.totalPending || 0}`}
-                  colorClass="fontRed"
-                  onClick={() => openDetailModal("payments", "pending")}
-                />
-                <DataCard
-                  title="Refund"
-                  loading={_loading?.payments}
-                  value={`₹ ${_dashboardData?.payments?.totalRefund || 0}`}
-                  colorClass="fontRed"
-                  onClick={() => openDetailModal("payments", "refund")}
-                />
-              </div>
-            </div>
-            {/* BOOKINGS */}
-            <div className="col-md-6 my-2">
-              <div className="row">
-                <div className="fw-bold fs18 mt-4">BOOKINGS</div>
-                <DataCard
-                  title="Total Booking"
-                  loading={_loading?.bookings}
-                  value={_dashboardData?.bookings?.totalBooking || 0}
-                  colorClass="fontRed"
-                  onClick={() => openDetailModal("bookings", "totalBooking")}
-                />
-                <DataCard
-                  title="Confirm Paid"
-                  loading={_loading?.bookings}
-                  value={_dashboardData?.bookings?.confirmBooking || 0}
-                  colorClass="fontGreen"
-                  onClick={() => openDetailModal("bookings", "confirmBooking")}
-                />
-                <DataCard
-                  title="Pending"
-                  loading={_loading?.bookings}
-                  value={_dashboardData?.bookings?.pendingBooking || 0}
-                  colorClass="fontBlue"
-                  onClick={() => openDetailModal("bookings", "pendingBooking")}
-                />
-                <DataCard
-                  title="Cancelled"
-                  loading={_loading?.bookings}
-                  value={_dashboardData?.bookings?.cancelled || 0}
-                  colorClass="fontRed"
-                  onClick={() => openDetailModal("bookings", "cancelled")}
-                />
-                <DataCard
-                  title="Vacant"
-                  loading={_loading?.bookings}
-                  value={_dashboardData?.bookings?.vacantCount || 0}
-                  colorClass="fontOrange"
-                  onClick={() => openDetailModal("bookings", "vacant")}
-                />
-              </div>
-            </div>
-            
-            {/* COTS */}
-            <div className="col-md-6 my-2">
-              <div className="row">
-                <div className="fw-bold fs18 mt-4">COTS</div>
-                <DataCard
-                  title="Total Cots"
-                  loading={_loading?.cots}
-                  value={_dashboardDataDetail?.cotsDetail?.totalCots?.length || 0}
-                  colorClass="fontBlue"
-                  onClick={() => openDetailModal("cots", "totalCots")}
-                />
-                <DataCard
-                  title="Occupied"
-                  loading={_loading?.cots}
-                  value={_dashboardDataDetail?.cotsDetail?.occupied?.length || 0}
-                  colorClass="fontRed"
-                  onClick={() => openDetailModal("cots", "occupied")}
-                />
-                <DataCard
-                  title="Available"
-                  loading={_loading?.cots}
-                  value={_dashboardDataDetail?.cotsDetail?.available?.length || 0}
-                  colorClass="fontGreen"
-                  onClick={() => openDetailModal("cots", "available")}
-                />
-                <DataCard
-                  title="Maintenance"
-                  loading={_loading?.cots}
-                  value={_dashboardDataDetail?.cotsDetail?.maintenance?.length || 0}
-                  colorClass="fontGreen"
-                  onClick={() => openDetailModal("cots", "maintenance")}
-                />
-                <DataCard
-                  title="Booked Cots"
-                  loading={_loading?.cots}
-                  value={_dashboardDataDetail?.cotsDetail?.booked?.length || 0}
-                  colorClass="fontOrange"
-                  onClick={() => openDetailModal("cots", "booked")}
-                />
-              </div>
-            </div>
-            {/* COMPLAINTS */}
-            <div className="col-md-6 my-2">
-              <div className="row">
-                <div className="fw-bold fs18 mt-4">COMPLAINTS</div>
-                <DataCard
-                  title="Open"
-                  loading={_loading?.complaints}
-                  value={_dashboardData?.complaints?.Open || 0}
-                  colorClass="fontOrange"
-                  onClick={() => openDetailModal("complaints", "Open")}
-                />
-                <DataCard
-                  title="In-Progress"
-                  loading={_loading?.complaints}
-                  value={_dashboardData?.complaints?.InProgress || 0}
-                  colorClass="fontBlue"
-                  onClick={() => openDetailModal("complaints", "InProgress")}
-                />
-                <DataCard
-                  title="On-Hold"
-                  loading={_loading?.complaints}
-                  value={_dashboardData?.complaints?.Hold || 0}
-                  colorClass="fontRed"
-                  onClick={() => openDetailModal("complaints", "Hold")}
-                />
-                <DataCard
-                  title="Resolved"
-                  loading={_loading?.complaints}
-                  value={_dashboardData?.complaints?.Closed || 0}
-                  colorClass="fontGreen"
-                  onClick={() => openDetailModal("complaints", "Closed")}
-                />
-                <DataCard
-                  title="Rejected"
-                  loading={_loading?.complaints}
-                  value={_dashboardData?.complaints?.Reject || 0}
-                  colorClass="fontRed"
-                  onClick={() => openDetailModal("complaints", "Reject")}
-                />
-              </div>
-            </div>
-          </div>
+      {/* Charts Row */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <OccupancyDonut
+            cotsDetail={cotsDetail}
+            loading={loading.cots}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <RevenueBarChart
+            paymentsDetail={dashboardDataDetail?.paymentsDetail}
+            loading={loading.payments}
+          />
+        </Grid>
+      </Grid>
 
+      {/* Quick Tables Row */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <ComplaintsQuickTable
+            complaintsDetail={dashboardDataDetail?.complaintsDetail}
+            loading={loading.complaints}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <AdmissionsQuickTable
+            bookingsDetail={dashboardDataDetail?.bookingsDetail}
+            loading={loading.bookings}
+          />
+        </Grid>
+      </Grid>
 
-
-
-        </div>
-      </div>
-
-      {/* Modals */}
-      {detailModal?.type === "payments" && (
+      {/* Detail Modals */}
+      {detailModal?.type === 'payments' && (
         <DashboardPaymentsDetailModal
           open={true}
           onClose={closeModal}
           {...detailModal.params}
-          type={detailModal?.dataType}
-          detailedData={_dashboardDataDetail?.paymentsDetail}
+          type={detailModal.dataType}
+          detailedData={dashboardDataDetail?.paymentsDetail}
         />
       )}
-      {detailModal?.type === "bookings" && (
+      {detailModal?.type === 'bookings' && (
         <DashboardBookingsDetailModal
           open={true}
           onClose={closeModal}
           {...detailModal.params}
-          type={detailModal?.dataType}
-          detailedData={_dashboardDataDetail?.bookingsDetail}
+          type={detailModal.dataType}
+          detailedData={dashboardDataDetail?.bookingsDetail}
         />
       )}
-      {detailModal?.type === "cots" && (
+      {detailModal?.type === 'cots' && (
         <DashboardCotsDetailModal
           open={true}
           onClose={closeModal}
           {...detailModal.params}
-          type={detailModal?.dataType}
-          detailedData={_dashboardDataDetail?.cotsDetail}
+          type={detailModal.dataType}
+          detailedData={dashboardDataDetail?.cotsDetail}
         />
       )}
-      {detailModal?.type === "complaints" && (
+      {detailModal?.type === 'complaints' && (
         <DashboardComplaintsDetailModal
           open={true}
           onClose={closeModal}
           {...detailModal.params}
-          type={detailModal?.dataType}
-          detailedData={_dashboardDataDetail?.complaintsDetail}
+          type={detailModal.dataType}
+          detailedData={dashboardDataDetail?.complaintsDetail}
         />
       )}
     </>

@@ -1,23 +1,13 @@
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  TextField,
-  TableContainer,
-} from "@mui/material";
-import { IMAGES_ICON } from "../../assets/images/exportImages";
-import {
-  customTableTemplate,
-  customTableHeader,
-  getExportEXCEL,
-} from "../../services/HelperService";
-import CustomDialogue from "../../components/helpers/CustomDialogue";
-import { useEffect, useState } from "react";
-import { getDashboardBookingsDetail } from "../../models";
-import { SkeletonProviderTables } from "../../providers/SkeletonProvider";
-import moment from "moment";
+import { useEffect, useState, useMemo } from 'react';
+import { Box } from '@mui/material';
+import { getExportEXCEL } from '../../services/HelperService';
+import { getDashboardBookingsDetail } from '../../models';
+import DialogModal from '../../components/shared/DialogModal';
+import DataTable, { Column } from '../../components/shared/DataTable';
+import SearchInput from '../../components/shared/SearchInput';
+import ExportButton from '../../components/shared/ExportButton';
+import StatusBadge from '../../components/shared/StatusBadge';
+import moment from 'moment';
 
 interface DashboardBookingsDetailModalProps {
   open: boolean;
@@ -43,18 +33,20 @@ interface BookingDetail {
   status?: string;
 }
 
+const TITLE_MAP: Record<string, string> = {
+  totalBooking: 'Total Booking Details',
+  cancelled: 'Cancelled Details',
+  pendingBooking: 'Pending Details',
+  confirmBooking: 'Confirmed Details',
+  vacant: 'Vacant Details',
+};
+
 export default function DashboardBookingsDetailModal({
-  open,
-  onClose,
-  fromDate,
-  toDate,
-  branchId,
-  type = "confirmBooking",
-  detailedData,
+  open, onClose, fromDate, toDate, branchId, type = 'confirmBooking', detailedData,
 }: DashboardBookingsDetailModalProps) {
   const [data, setData] = useState<BookingDetail[]>([]);
   const [loading, setLoading] = useState(false);
-  const [_search, _setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (!open) return;
@@ -64,166 +56,85 @@ export default function DashboardBookingsDetailModal({
     }
     setLoading(true);
     const queryStr = `?branchId=${branchId}&from=${fromDate}&to=${toDate}`;
-    getDashboardBookingsDetail(queryStr).then((resp: any) => {
-      if (resp?.data?.status === "success") {
-        setData(resp.data.result?.[type] || []);
-      } else {
-        setData([]);
-      }
-      setLoading(false);
-    });
+    getDashboardBookingsDetail(queryStr)
+      .then((resp: any) => {
+        if (resp?.data?.status === 'success') {
+          setData(resp.data.result?.[type] || []);
+        } else {
+          setData([]);
+        }
+      })
+      .finally(() => setLoading(false));
   }, [open, fromDate, toDate, branchId, type, detailedData]);
 
-  const getPrintTableHeadBody = () => {
-    const header = [
-      "S. No",
-      "Candidate ID",
-      "Candidate Name",
-      "Mobile No",
-      "Email",
-      "Branch",
-      "Room",
-      "Cot",
-      "Room Rent",
-      "Payment Status",
-      "Booking Status",
+  const filteredData = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return data;
+    return data.filter((item) =>
+      Object.values(item).some((v) => v?.toString().toLowerCase().includes(q))
+    );
+  }, [data, search]);
+
+  const columns: Column<BookingDetail>[] = useMemo(() => {
+    const cols: Column<BookingDetail>[] = [
+      { id: 'sno', label: '#', width: 50, render: (_, i) => i + 1 },
+      { id: 'candidateId', label: 'ID', render: (r) => r.candidateId || '-' },
+      { id: 'name', label: 'Resident', render: (r) => r.candidateName || '-' },
+      { id: 'mobile', label: 'Mobile', render: (r) => r.mobileNumber || '-' },
+      { id: 'email', label: 'Email', render: (r) => r.email || '-' },
+      { id: 'branch', label: 'Branch', render: (r) => r.branchName || '-' },
+      { id: 'room', label: 'Room', render: (r) => r.roomNumber || '-' },
+      { id: 'cot', label: 'Bed', render: (r) => r.cotNumber || '-' },
+      { id: 'rent', label: 'Rent', align: 'right', render: (r) => r.roomRent || '-' },
+      { id: 'payment', label: 'Payment', render: (r) => r.paymentStatus ? <StatusBadge status={r.paymentStatus} /> : 'Unpaid' },
+      { id: 'status', label: 'Status', render: (r) => r.status ? <StatusBadge status={r.status} /> : '-' },
     ];
-    if (type === "totalBooking" || type === "pendingBooking" || type === "confirmBooking") {
-      header.push("Payment Status");
+
+    if (type === 'cancelled') {
+      cols.push({
+        id: 'cancelDate',
+        label: 'Cancelled Date',
+        render: (r) => r.rejectedOrCancelledDate && moment(r.rejectedOrCancelledDate).isValid()
+          ? moment(r.rejectedOrCancelledDate).format('DD-MMM-YYYY')
+          : '-',
+      });
     }
-    if (type === "cancelled") header.push("Rejected/Cancelled Date");
-    const body = data?.map((item: BookingDetail, index: number) => {
-      const row = [
-        index + 1,
-        item.candidateId || "-",
-        item.candidateName || "-",
-        item.mobileNumber || "-",
-        item.email || "-",
-        item.branchName || "-",
-        item.roomNumber || "-",
-        item.cotNumber || "-",
-        item.roomRent || "-",
-        item.paymentStatus || "-",
-        item.status || "-",
-      ];
-      if (type === "totalBooking" || type === "pendingBooking" || type === "confirmBooking") {
-        row.push(item.paymentStatus || "-");
-      }
-      if (type === "cancelled") {
-        row.push(
-          item.rejectedOrCancelledDate && moment(item.rejectedOrCancelledDate).isValid()
-            ? moment(item.rejectedOrCancelledDate).format("DD-MMM-YYYY")
-            : "-"
-        );
-      }
-      return row;
-    });
-    return { header, body };
-  };
+
+    return cols;
+  }, [type]);
 
   const exportEXCEL = () => {
-    const { header, body } = getPrintTableHeadBody();
-    getExportEXCEL({ header, body, fileName: "Bookings Details" });
+    const header = columns.map((c) => c.label);
+    const body = filteredData.map((item, idx) => columns.map((c) => {
+      const node = c.render(item, idx);
+      return typeof node === 'string' || typeof node === 'number' ? node : '-';
+    }));
+    getExportEXCEL({ header, body, fileName: 'Bookings Details' });
   };
-
-  let title = "";
-  if (type === "totalBooking") title = "Total Booking";
-  if (type === "cancelled") title = "Cancelled";
-  if (type === "pendingBooking") title = "Pending";
-  if (type === "confirmBooking") title = "Confirm";
 
   if (!open) return null;
 
   return (
-    <CustomDialogue
-      displaySize={"lg"}
-      title={title + " Details"}
-      dialogueFlag={true}
-      onCloseClick={onClose}
-      mainContent={
-        <div className="my-2">
-          <TableContainer className="tableBorder rounded">
-            <Table size="small" sx={{ ...customTableTemplate }}>
-              <TableHead>
-                <TableRow sx={{ ...customTableHeader }}>
-                  <TableCell className="fw-bold text-nowrap">S.No</TableCell>
-                  <TableCell className="fw-bold text-nowrap">Candidate ID</TableCell>
-                  <TableCell className="fw-bold text-nowrap">Candidate Name</TableCell>
-                  <TableCell className="fw-bold text-nowrap">Mobile No</TableCell>
-                  <TableCell className="fw-bold text-nowrap">Email</TableCell>
-                  <TableCell className="fw-bold text-nowrap">Branch</TableCell>
-                  <TableCell className="fw-bold text-nowrap">Room</TableCell>
-                  <TableCell className="fw-bold text-nowrap">Cot</TableCell>
-                  <TableCell className="fw-bold text-nowrap">Room Rent</TableCell>
-                  <TableCell className="fw-bold text-nowrap">Payment Status</TableCell>
-                  <TableCell className="fw-bold text-nowrap">Booking Status</TableCell>
-                  {type === "cancelled" && <TableCell className="fw-bold"> Rejected/Cancelled Date</TableCell>}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data?.length > 0
-                  ? data
-                    .filter((content: BookingDetail) => {
-                      const lowerSearchInput = _search?.toLowerCase()?.trim();
-                      return (
-                        lowerSearchInput === "" ||
-                        Object?.values(content)?.some((value) => value?.toString()?.toLowerCase()?.includes(lowerSearchInput))
-                      );
-                    })
-                    .map((row, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{idx + 1}</TableCell>
-                        <TableCell>{row?.candidateId || "-"}</TableCell>
-                        <TableCell>{row?.candidateName || "-"}</TableCell>
-                        <TableCell>{row?.mobileNumber || "-"}</TableCell>
-                        <TableCell>{row?.email || "-"}</TableCell>
-                        <TableCell>{row?.branchName || "-"}</TableCell>
-                        <TableCell>{row?.roomNumber || "-"}</TableCell>
-                        <TableCell>{row?.cotNumber || "-"}</TableCell>
-                        <TableCell>{row?.roomRent || "-"}</TableCell>
-                        <TableCell>{row?.paymentStatus || "Unpaid"}</TableCell>
-                        <TableCell>{row?.status || "-"}</TableCell>
-                        {(type === "totalBooking" || type === "pendingBooking" || type === "confirmBooking") && (
-                          <TableCell>{row?.paymentStatus || "-"}</TableCell>
-                        )}
-                        {type === "cancelled" && (
-                          <TableCell>
-                            {row?.rejectedOrCancelledDate && moment(row.rejectedOrCancelledDate).isValid()
-                              ? moment(row.rejectedOrCancelledDate).format("DD-MMM-YYYY")
-                              : "-"}
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))
-                  : !loading && (
-                    <TableRow>
-                      <TableCell className="fs-3 text-muted" align="center" colSpan={type === "cancelled" ? 12 : 11}>Data Not Found</TableCell>
-                    </TableRow>
-                  )}
-                <SkeletonProviderTables columns={type === "cancelled" ? 12 : 11} visible={loading} />
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </div>
+    <DialogModal
+      open={open}
+      onClose={onClose}
+      title={TITLE_MAP[type] || 'Booking Details'}
+      maxWidth="lg"
+      actions={
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', width: '100%' }}>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search bookings..." />
+          <ExportButton onExport={exportEXCEL} />
+        </Box>
       }
-      actionContent={
-        <div className="flex-grow-1">
-          <hr className="mt-0" />
-          <div className="my-2 d-flex justify-content-center align-items-center gap-4">
-            <div className="d-flex align-items-center">
-              <TextField size="small" fullWidth className="bg-white py-0" value={_search} placeholder="Search"
-                onChange={(e) => _setSearch(e.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <img height={18} src={IMAGES_ICON.TableSearchIcon} role="button" draggable="false" />
-                  ),
-                }}
-              />
-            </div>
-            <img height={24} src={IMAGES_ICON.TableDownloadIcon} role="button" draggable="false" onClick={exportEXCEL} />
-          </div>
-        </div>
-      }
-    />
+    >
+      <DataTable
+        columns={columns}
+        data={filteredData}
+        loading={loading}
+        skeletonRows={5}
+        emptyTitle="No data found"
+        emptyDescription="No booking records match your criteria"
+      />
+    </DialogModal>
   );
 }
