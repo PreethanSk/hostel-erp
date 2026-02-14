@@ -289,7 +289,7 @@ export default function Payments({ PageAccess, handleBack, handleNext, handleClo
 
       {_admissionType === 'Candidate' && (
         <>
-          <Typography variant="body2" sx={{ color: gray[500], mb: 1 }}>Include Amount for Pay:</Typography>
+          <Typography variant="body2" sx={{ color: gray[500], mb: 1 }}>Include payable amount</Typography>
           <Grid2 container spacing={3}>
             <Grid2 size={{ xs: 12, md: 3 }}>
               <FormField label="Admission Fee">
@@ -351,11 +351,11 @@ export default function Payments({ PageAccess, handleBack, handleNext, handleClo
           </Grid2>
 
           <Divider sx={{ my: 2 }} />
-          <Typography variant="body2" sx={{ color: gray[500], mb: 1 }}>Total Amount for Candidate Pay:</Typography>
+          <Typography variant="body2" sx={{ color: gray[500], mb: 1 }}>Total payable amount</Typography>
 
           <Grid2 container spacing={3}>
             <Grid2 size={{ xs: 12, md: 3 }}>
-              <FormField label="Pay by Candidate">
+              <FormField label="Amount paid">
                 <TextField fullWidth size="small" type="number" onKeyDown={DisableKeyUpDown}
                   value={_formData?.dueToPaid?.toString() || ''} onChange={(e: any) => {
                     const numericValue = Math.ceil(Number(e.target.value));
@@ -365,7 +365,7 @@ export default function Payments({ PageAccess, handleBack, handleNext, handleClo
               </FormField>
             </Grid2>
             <Grid2 size={{ xs: 12, md: 3 }}>
-              <FormField label="Discount Offer">
+              <FormField label="Discount deduction">
                 <TextField fullWidth size="small" type="number" onKeyDown={DisableKeyUpDown}
                   value={_formData?.discountOffer?.toString() || ''} onChange={(e: any) => {
                     const numericValue = Number(e.target.value);

@@ -1289,11 +1289,22 @@ exports.insertUpdateCandidateAdmissions = async (req, res) => {
         cotVacant: vacantList.join(",")
       });
 
+      // When registering a new resident, create a placeholder candidate if none provided
+      // (CANDIDATE_ADMISSION requires candidateRefId to exist in CANDIDATE_DETAILS)
+      if (!body.candidateRefId || body.candidateRefId === 0) {
+        const placeholderCandidate = await db.CandidateDetails.create({
+          isActive: true,
+          name: "Pending",
+        });
+        body.candidateRefId = placeholderCandidate.id;
+      }
+
       // Insert Admission
       const inserted = await db.CandidateAdmission.create(body);
       return res.status(201).json(await formatResponse.success({
         message: "Inserted Successfully",
-        insertedId: inserted.id
+        insertedId: inserted.id,
+        candidateRefId: body.candidateRefId,
       }));
     }
 

@@ -73,7 +73,7 @@ export default function CandidatePayments() {
       .then((resp) => {
         if (resp?.data?.status === 'success') {
           const allRows = resp?.data?.result?.results || [];
-          const header = ['#', 'Resident ID', 'Resident Name', 'Paid Amount', 'Due To Be Paid', 'Due Date', 'Branch'];
+          const header = ['#', 'Resident ID', 'Resident Name', 'Paid Amount', 'Due Payable', 'Due Date', 'Branch'];
           const body = allRows.map((item: any, index: number) => [
             index + 1, item?.candidateId || '-', item?.candidateName || '-',
             item?.paidAmount ?? '-', item?.dueToPaid ?? '-',
@@ -110,7 +110,7 @@ export default function CandidatePayments() {
     { id: 'candidateId', label: 'Resident ID', render: (r) => r?.candidateId || '-' },
     { id: 'name', label: 'Resident Name', render: (r) => r?.candidateName || '-' },
     { id: 'paid', label: 'Paid Amount', align: 'right' as const, render: (r) => r?.paidAmount ?? '-' },
-    { id: 'due', label: 'Due To Be Paid', align: 'right' as const, render: (r) => r?.dueToPaid ?? '-' },
+    { id: 'due', label: 'Due Payable', align: 'right' as const, render: (r) => r?.dueToPaid ?? '-' },
     { id: 'dueDate', label: 'Due Date', render: (r) => r?.dueDate ? moment(r.dueDate).format('DD-MMM-YYYY') : '-' },
     { id: 'branch', label: 'Branch', render: (r) => r?.branchName || '-' },
   ], [page, rowsPerPage]);

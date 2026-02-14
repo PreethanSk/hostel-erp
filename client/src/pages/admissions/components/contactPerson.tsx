@@ -118,9 +118,9 @@ export default function ContactPerson({ handleBack, handleNext }: any) {
 
     return (
         <Box>
-            <Typography sx={{ fontWeight: 600, mb: 0.5 }}>Home Contact Information</Typography>
+            <Typography sx={{ fontWeight: 600, mb: 0.5 }}>Emergency contact information</Typography>
             <Typography variant="body2" sx={{ color: gray[500], mb: 2 }}>
-                Provide Home Person Relationship Type, Name, Mobile No who stays in home
+                Provide the relationship, name and mobile number of the person to be contacted in case of emergency.
             </Typography>
 
             <Grid2 container spacing={3}>

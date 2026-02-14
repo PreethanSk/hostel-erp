@@ -137,9 +137,12 @@ export default function Index({ PageAccess }: any) {
       .then((resp) => {
         if (resp?.data?.status === 'success') {
           CustomAlert('success', 'Admission details saved');
-          if (body?.id === 0) body.id = resp?.data?.result?.insertedId;
-          setFormData({ ...formData, id: resp?.data?.result?.insertedId, admittedBy: body?.admittedBy });
-          dispatch({ type: 'SET_ADMISSION_DETAILS', data: { ...admissionDetails, admissionDetails: body } });
+          const insertedId = resp?.data?.result?.insertedId;
+          const candidateRefId = resp?.data?.result?.candidateRefId ?? body?.candidateRefId;
+          if (body?.id === 0) body.id = insertedId;
+          if (candidateRefId) body.candidateRefId = candidateRefId;
+          setFormData({ ...formData, id: insertedId, candidateRefId, admittedBy: body?.admittedBy });
+          dispatch({ type: 'SET_ADMISSION_DETAILS', data: { ...admissionDetails, admissionDetails: { ...body, candidateRefId } } });
         }
       })
       .catch((err) => { console.log(err); CustomAlert('warning', err?.response?.data?.error); })
