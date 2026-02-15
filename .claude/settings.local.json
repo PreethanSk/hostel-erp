@@ -13,7 +13,30 @@
       "Bash(test:*)",
       "Bash(docker ps:*)",
       "Bash(node scripts/seed-rbac.js:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "WebFetch(domain:experience.sap.com)",
+      "WebFetch(domain:linear.app)",
+      "WebFetch(domain:vercel.com)",
+      "WebFetch(domain:www.sap.com)",
+      "WebFetch(domain:www.pencilandpaper.io)",
+      "WebFetch(domain:www.smashingmagazine.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:stripe.com)",
+      "WebFetch(domain:hicronsoftware.com)",
+      "WebFetch(domain:www.coveo.com)",
+      "WebFetch(domain:www.designstudiouiux.com)",
+      "WebFetch(domain:uitop.design)",
+      "WebFetch(domain:carbondesignsystem.com)",
+      "WebFetch(domain:ant.design)",
+      "WebFetch(domain:myfrontdesk.cloudbeds.com)",
+      "WebFetch(domain:www.cloudbeds.com)",
+      "WebFetch(domain:htmlcolors.com)",
+      "WebFetch(domain:www.colorsandfonts.com)",
+      "WebFetch(domain:mobbin.com)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)",
+      "Bash(npm ls:*)",
+      "Bash(ls:*)"
     ]
   }
 }

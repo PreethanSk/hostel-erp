@@ -1,599 +1,492 @@
-import { FormControl, Select, MenuItem, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
-import { IMAGES_ICON } from "../../assets/images/exportImages";
-import { textFieldStyle, DisableKeyUpDown, CustomAlert, customTableHeader, customTableTemplate } from "../../services/HelperService";
-import { useStateValue } from "../../providers/StateProvider";
-import { useEffect, useState } from "react";
-import { getBranchGridList, getCandidateAdmissionById, getBranchCandidateDetailSearch, getBranchRoomsList, getAdmissionBookingAvailability, insertUpdateCandidateAdmission, getCotsByCotId, insertUpdateVacateDetails } from "../../models";
-import CustomDialogue from "../../components/helpers/CustomDialogue";
-import moment from "moment";
-import { CustomAutoSelect } from "../../components/helpers/CustomSelect";
-import { AddCircleOutlineRounded, RemoveCircleOutlineRounded } from "@mui/icons-material";
+import { FormControl, Select, MenuItem, TextField, Button, Box, Typography, Divider, IconButton } from '@mui/material';
+import Grid2 from '@mui/material/Grid2';
+import { ArrowLeft, Search, MapPin, DoorOpen, BedDouble, Calendar, UserRound, Minus, Plus } from 'lucide-react';
+import { DisableKeyUpDown, CustomAlert } from '../../services/HelperService';
+import { useStateValue } from '../../providers/StateProvider';
+import { useEffect, useState } from 'react';
+import {
+  getBranchGridList, getCandidateAdmissionById, getBranchCandidateDetailSearch,
+  getBranchRoomsList, getAdmissionBookingAvailability, insertUpdateCandidateAdmission,
+  getCotsByCotId, insertUpdateVacateDetails,
+} from '../../models';
+import DialogModal from '../../components/shared/DialogModal';
+import DataTable, { Column } from '../../components/shared/DataTable';
+import StatusBadge from '../../components/shared/StatusBadge';
+import FormField from '../../components/shared/FormField';
+import PageHeader from '../../components/shared/PageHeader';
+import moment from 'moment';
+import { CustomAutoSelect } from '../../components/helpers/CustomSelect';
+import { gray, primary } from '../../theme/tokens';
 
 export default function AdmissionTransfer({ PageAccess }: any) {
-    const [{ user }]: any = useStateValue()
-    const [_branchList, _setBranchList] = useState<any>([]);
-    const [_roomList, _setRoomList] = useState<any>([]);
-    const [_cotList, _setCotList] = useState<any>([]);
-    const [_searchCandidate, _setSearchCandidate] = useState('');
-    const [_search, _setSearch] = useState('');
-    const [_loading, _setLoading] = useState(false);
-    const [_available, _setAvailable] = useState(false);
-    const [_candidateList, _setCandidateList] = useState<any>([]);
-    const [_candidateDetails, _setCandidateDetails] = useState<any>({});
+  const [{ user }]: any = useStateValue();
+  const [branchList, setBranchList] = useState<any>([]);
+  const [roomList, setRoomList] = useState<any>([]);
+  const [cotList, setCotList] = useState<any>([]);
+  const [searchCandidate, setSearchCandidate] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [available, setAvailable] = useState(false);
+  const [candidateList, setCandidateList] = useState<any>([]);
+  const [candidateDetails, setCandidateDetails] = useState<any>({});
+  const [formData, setFormData] = useState<any>({ id: 0, isActive: true, noDayStay: '1', noDayStayType: 'Month' });
+  const [cotDetails, setCotDetails] = useState<any>({});
 
-    const [_editForm, _setEditForm] = useState(false);
-    const [_view, _setView] = useState(false);
-    const [_formData, _setFormData] = useState<any>({ id: 0, isActive: true, noDayStay: '1', noDayStayType: 'Month' })
-    const [_cotDetails, _setCotDetails] = useState<any>({})
-
-    const changeFormData = (key: string, value: any) => {
-        if (key === 'noDayStay') {
-            let monthlyRent = 0, dateOfNotice = '';
-            if (_formData?.noDayStayType === "Days") {
-                const perDayRent = Number(_cotDetails?.perDayRent || '0');
-                monthlyRent = perDayRent * Number(value)
-                dateOfNotice = moment(_formData?.dateOfAdmission).add(Number(value), 'days').format('YYYY-MM-DD')
-            } else {
-                monthlyRent = Number(_cotDetails?.rentAmount || '0') * Number(value)
-                dateOfNotice = moment(_formData?.dateOfAdmission).add(Number(value), 'months').format('YYYY-MM-DD')
-            }
-            _setFormData({ ..._formData, [key]: value, monthlyRent: monthlyRent, dateOfNotice: dateOfNotice })
-        } else if (key === "noDayStayType") {
-            let monthlyRent = 0, dateOfNotice = '';
-            if (value === "Days") {
-                const perDayRent = Number(_cotDetails?.perDayRent || '0');
-                monthlyRent = perDayRent * Number(_formData?.noDayStay)
-                dateOfNotice = moment(_formData?.dateOfAdmission).add(Number(_formData?.noDayStay), 'days').format('YYYY-MM-DD')
-            } else {
-                monthlyRent = Number(_cotDetails?.rentAmount || '0') * Number(_formData?.noDayStay)
-                dateOfNotice = moment(_formData?.dateOfAdmission).add(Number(_formData?.noDayStay), 'months').format('YYYY-MM-DD')
-            }
-            _setFormData({ ..._formData, [key]: value, monthlyRent: monthlyRent, dateOfNotice: dateOfNotice })
-        } else {
-
-            _setFormData({ ..._formData, [key]: value });
-        }
+  const changeFormData = (key: string, value: any) => {
+    if (key === 'noDayStay') {
+      let monthlyRent = 0, dateOfNotice = '';
+      if (formData?.noDayStayType === 'Days') {
+        monthlyRent = Number(cotDetails?.perDayRent || '0') * Number(value);
+        dateOfNotice = moment(formData?.dateOfAdmission).add(Number(value), 'days').format('YYYY-MM-DD');
+      } else {
+        monthlyRent = Number(cotDetails?.rentAmount || '0') * Number(value);
+        dateOfNotice = moment(formData?.dateOfAdmission).add(Number(value), 'months').format('YYYY-MM-DD');
+      }
+      setFormData({ ...formData, [key]: value, monthlyRent, dateOfNotice });
+    } else if (key === 'noDayStayType') {
+      let monthlyRent = 0, dateOfNotice = '';
+      if (value === 'Days') {
+        monthlyRent = Number(cotDetails?.perDayRent || '0') * Number(formData?.noDayStay);
+        dateOfNotice = moment(formData?.dateOfAdmission).add(Number(formData?.noDayStay), 'days').format('YYYY-MM-DD');
+      } else {
+        monthlyRent = Number(cotDetails?.rentAmount || '0') * Number(formData?.noDayStay);
+        dateOfNotice = moment(formData?.dateOfAdmission).add(Number(formData?.noDayStay), 'months').format('YYYY-MM-DD');
+      }
+      setFormData({ ...formData, [key]: value, monthlyRent, dateOfNotice });
+    } else {
+      setFormData({ ...formData, [key]: value });
     }
+  };
 
-    const handleCotAndFeeUpdate = (item: any) => {
-        _setFormData({ ..._formData, cotRefId: item?.id, admissionFee: item?.advanceAmount, monthlyRent: item?.rentAmount })
-    }
+  const handleCotAndFeeUpdate = (item: any) => {
+    setFormData({ ...formData, cotRefId: item?.id, admissionFee: item?.advanceAmount, monthlyRent: item?.rentAmount });
+  };
 
-    const handleSearchCandidate = () => {
-        if (!_searchCandidate?.trim()) {
-            return
+  const handleSearchCandidate = () => {
+    if (!searchCandidate?.trim()) return;
+    setLoading(true);
+    getBranchCandidateDetailSearch(searchCandidate)
+      .then((resp) => {
+        if (resp?.data?.status === 'success') {
+          if (!resp?.data?.result?.length) {
+            CustomAlert('error', 'Resident not found');
+          } else {
+            setCandidateList([...resp?.data?.result]);
+          }
         }
-        _setLoading(true)
-        getBranchCandidateDetailSearch(_searchCandidate)
+      })
+      .catch((err) => console.log(err))
+      .finally(() => setLoading(false));
+  };
+
+  const handleSelectCandidate = (id: number) => {
+    if (!id) { CustomAlert('warning', 'Resident not registered'); return; }
+    setCandidateList([]);
+    getCandidateAdmissionById({ candidateId: id })
+      .then((resp) => {
+        if (resp?.data?.status === 'success') {
+          const data = resp?.data?.result?.length ? resp?.data?.result[0] : { ...resp?.data?.result };
+          if (!Object?.keys(data)?.length) {
+            CustomAlert('warning', "Resident doesn't have any admission");
+          } else {
+            setCandidateDetails({ ...data });
+          }
+        }
+      })
+      .catch((err) => console.log(err));
+  };
+
+  const handleClearForm = () => {
+    setLoading(false);
+    setCandidateDetails({});
+    setSearchCandidate('');
+    setAvailable(false);
+    setFormData({ id: 0, isActive: true, noDayStay: '1', noDayStayType: 'Month' });
+  };
+
+  const handleCheckAvailable = () => {
+    if (!formData?.branchRefId) { CustomAlert('warning', 'Please select a branch'); return; }
+    if (!formData?.roomRefId) { CustomAlert('warning', 'Please select a room'); return; }
+    if (!formData?.cotRefId) { CustomAlert('warning', 'Please select a bed'); return; }
+    if (!formData?.dateOfAdmission) { CustomAlert('warning', 'Please select admission date'); return; }
+    if (candidateDetails?.cotRefId === formData?.cotRefId &&
+      candidateDetails?.roomRefId === formData?.roomRefId &&
+      candidateDetails?.branchRefId === formData?.branchRefId) {
+      CustomAlert('warning', 'Cannot transfer to the same bed. Please select a different bed.');
+      return;
+    }
+    setLoading(true);
+    getAdmissionBookingAvailability({
+      roomId: formData?.roomRefId, branchId: formData?.branchRefId,
+      dateOfAdmission: formData?.dateOfAdmission, cotId: formData?.cotRefId,
+    })
+      .then((resp: any) => {
+        if (resp?.data?.status === 'success') {
+          if (resp?.data?.result?.status === 'Available') {
+            CustomAlert('success', resp?.data?.result?.message || 'Bed is available for transfer');
+            setAvailable(true);
+          } else {
+            CustomAlert('warning', resp?.data?.result?.message || `Booking available from ${moment(resp?.data?.result?.availableDate)?.format('DD-MMM-YYYY')}`);
+            setAvailable(false);
+          }
+        }
+      })
+      .catch((err: any) => {
+        CustomAlert('warning', err?.response?.data?.error || 'Error checking availability');
+        setAvailable(false);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  const checkValidation = () => {
+    if (!formData?.noDayStayType) { CustomAlert('warning', 'Duration type required'); return false; }
+    if (!formData?.noDayStay) { CustomAlert('warning', 'Duration count required'); return false; }
+    if (!available) { CustomAlert('warning', 'Please check availability before proceeding'); return false; }
+    if (!formData?.branchRefId) { CustomAlert('warning', 'Branch selection required'); return false; }
+    if (!formData?.roomRefId) { CustomAlert('warning', 'Room selection required'); return false; }
+    if (!formData?.cotRefId) { CustomAlert('warning', 'Bed selection required'); return false; }
+    if (!formData?.dateOfAdmission) { CustomAlert('warning', 'Admission date required'); return false; }
+    return true;
+  };
+
+  const handleReset = () => {
+    setAvailable(false);
+    setFormData({ id: 0, isActive: true, noDayStay: '1', noDayStayType: 'Month' });
+  };
+
+  const handleSubmitForm = () => {
+    setLoading(true);
+    if (!checkValidation()) { setLoading(false); return; }
+    let totalPaid = 0;
+    if (candidateDetails?.paymentStatus === 'Paid') {
+      if (candidateDetails?.noDayStayType === 'Month') {
+        totalPaid = Number(candidateDetails?.monthlyRent || '0') * Number(candidateDetails?.noDayStay || '0') + Number(candidateDetails?.admissionFee || '0') + Number(candidateDetails?.advancePaid || '0');
+      } else {
+        totalPaid = Number(candidateDetails?.monthlyRent || '0') / 30 * Number(candidateDetails?.noDayStay || '0') + Number(candidateDetails?.admissionFee || '0') + Number(candidateDetails?.advancePaid || '0');
+      }
+    }
+    const transferBody = {
+      id: candidateDetails?.id || 0,
+      candidateRefId: candidateDetails?.candidateRefId || 0,
+      branchRefId: formData?.branchRefId || 0,
+      roomRefId: formData?.roomRefId || 0,
+      cotRefId: formData?.cotRefId || 0,
+      dateOfAdmission: formData?.dateOfAdmission || '',
+      admittedBy: user?.firstName + ' ' + user?.lastName || '',
+      dateOfNotice: formData?.dateOfNotice || '',
+      admissionFee: formData?.admissionFee || '',
+      advancePaid: formData?.advancePaid || '',
+      monthlyRent: (formData?.monthlyRent || '') || '',
+      noDayStayType: (formData?.noDayStayType + '') || 'Month',
+      noDayStay: (formData?.noDayStay + '') || '1',
+      admissionStatus: 'Inprogress',
+      dues: candidateDetails?.dues || '',
+      isActive: true,
+    };
+    const vacateBody = {
+      id: formData?.id || 0,
+      candidateRefId: transferBody?.candidateRefId,
+      branchRefId: transferBody?.branchRefId,
+      admissionRefId: transferBody?.id,
+      vacateType: 'Transfer Vacate',
+      vacateStatus: 'Approved',
+      feedbackBehavior: '', feedbackBrief: '', damageRemarks: '',
+      payableAdvancePaid: candidateDetails?.paymentStatus === 'Paid' ? candidateDetails?.advancePaid : '0',
+      payableAdmissionFee: candidateDetails?.paymentStatus === 'Paid' ? candidateDetails?.admissionFee : '0',
+      payableMonthlyRent: candidateDetails?.paymentStatus === 'Paid' ? candidateDetails?.monthlyRent : '0',
+      payablePenalty: '0', payableDuePending: '0',
+      netAmountPayable: candidateDetails?.paymentStatus === 'Paid' ? (totalPaid + '') : '0',
+      isActive: true,
+    };
+    insertUpdateVacateDetails(vacateBody)
+      .then((resp) => {
+        if (resp?.data?.status === 'success') {
+          insertUpdateCandidateAdmission(transferBody)
             .then((resp) => {
-                if (resp?.data?.status === "success") {
-                    if (!resp?.data?.result?.length) {
-                        CustomAlert("error", "Candidate not found")
-                    } else {
-                        _setCandidateList([...resp?.data?.result])
-                    }
-                }
+              if (resp?.data?.status === 'success') {
+                CustomAlert('success', 'Resident transfer successful');
+                handleClearForm();
+              }
             })
             .catch((err) => console.log(err))
-            .finally(() => _setLoading(false))
+            .finally(() => setLoading(false));
+        }
+      })
+      .catch((err) => console.log(err));
+  };
+
+  useEffect(() => {
+    if (formData?.cotRefId) {
+      getCotsByCotId(formData?.cotRefId)
+        .then((resp) => {
+          if (resp?.data?.status === 'success') {
+            const cd = resp?.data?.result;
+            setCotDetails(cd);
+            setFormData({
+              ...formData, roomNumber: cd?.roomNumber, cotNumber: cd?.cotNumber, cotsType: cd?.cotsType,
+              roomTypeName: cd?.roomTypeName, admissionFee: cd?.admissionFee, advancePaid: cd?.advanceAmount,
+              oneDayStay: cd?.oneDayStay, monthlyRent: cd?.rentAmount || '0', noDayStay: cd?.noDayStay || '1',
+              noDayStayType: cd?.noDayStayType || 'Month',
+              dateOfNotice: cd?.dateOfNotice ? cd?.dateOfNotice : moment(cd?.dateOfAdmission).add(1, 'months').format('YYYY-MM-DD'),
+            });
+          } else {
+            setFormData({ id: 0, isActive: true, noDayStay: '1', noDayStayType: 'Month' });
+          }
+        })
+        .catch(() => setFormData({ id: 0, isActive: true, noDayStay: '1', noDayStayType: 'Month' }));
     }
+  }, [formData?.cotRefId]);
 
-    const handleSelectCandidate = (id: number) => {
-        if (!id) {
-            CustomAlert('warning', 'Candidate not registered')
-            return;
-        }
-        _setCandidateList([]);
-        getCandidateAdmissionById({ candidateId: id })
-            .then((resp) => {
-                if (resp?.data?.status === "success") {
-                    const data = resp?.data?.result?.length ? resp?.data?.result[0] : { ...resp?.data?.result }
-                    if (!Object?.keys(data)?.length) {
-                        CustomAlert("warning", "Candidate doesn't have any admission")
-                    } else {
-                        _setCandidateDetails({
-                            ...data,
-                            dateOfAdmission: data?.dateOfAdmission,
-                            cotNumber: data?.cotNumber,
-                            roomNumber: data?.roomNumber,
-                            branchName: data?.branchName,
-                        })
-                    }
-                }
-            })
-            .catch((err) => console.log(err))
-    }
-
-    const handleClearForm = () => {
-        _setLoading(false);
-        _setEditForm(false);
-        _setCandidateDetails({})
-        _setSearchCandidate('')
-        _setAvailable(false)
-        _setFormData({ id: 0, isActive: true, noDayStay: '1', noDayStayType: 'Month' })
-    }
-
-
-    const handleCheckAvailable = () => {
-        // Validate required fields before checking availability
-        if (!_formData?.branchRefId) {
-            CustomAlert('warning', 'Please select a branch');
-            return;
-        }
-        if (!_formData?.roomRefId) {
-            CustomAlert('warning', 'Please select a room');
-            return;
-        }
-        if (!_formData?.cotRefId) {
-            CustomAlert('warning', 'Please select a cot');
-            return;
-        }
-        if (!_formData?.dateOfAdmission) {
-            CustomAlert('warning', 'Please select admission date');
-            return;
-        }
-
-        // Check if trying to transfer to the same cot
-        if (_candidateDetails?.cotRefId === _formData?.cotRefId &&
-            _candidateDetails?.roomRefId === _formData?.roomRefId &&
-            _candidateDetails?.branchRefId === _formData?.branchRefId) {
-            CustomAlert('warning', 'Cannot transfer to the same cot. Please select a different cot.');
-            return;
-        }
-
-        _setLoading(true)
-        const body = {
-            roomId: _formData?.roomRefId,
-            branchId: _formData?.branchRefId,
-            dateOfAdmission: _formData?.dateOfAdmission,
-            cotId: _formData?.cotRefId,
-        }
-        getAdmissionBookingAvailability(body)
-            .then((resp: any) => {
-                if (resp?.data?.status === "success") {
-                    if (resp?.data?.result?.status === 'Available') {
-                        CustomAlert('success', resp?.data?.result?.message || 'Cot is available for transfer')
-                        _setAvailable(true)
-                    } else {
-                        const message = resp?.data?.result?.message || `Booking available from ${moment(resp?.data?.result?.availableDate)?.format('DD-MMM-YYYY')}`;
-                        CustomAlert('warning', message)
-                        _setAvailable(false)
-                    }
-                }
-            })
-            .catch((err: any) => {
-                const errorMessage = err?.response?.data?.error || 'Error checking availability';
-                CustomAlert('warning', errorMessage)
-                _setAvailable(false)
-            })
-            .finally(() => _setLoading(false))
-
-    }
-
-    const getOtherList = () => {
-        getBranchGridList()
-            .then((resp) => {
-                if (resp?.data?.status === "success") {
-                    _setBranchList(resp?.data?.result?.results);
-                }
-            })
-            .catch(console.log)
-    }
-
-
-    const checkValidation = () => {
-        if (!_formData?.noDayStayType) {
-            CustomAlert("warning", "Duration type required");
-            return false
-        }
-        if (!_formData?.noDayStay) {
-            CustomAlert("warning", "Duration count required");
-            return false
-        }
-        if (!_available) {
-            CustomAlert("warning", "Please check availability before proceeding");
-            return false
-        }
-        if (!_formData?.branchRefId) {
-            CustomAlert("warning", "Branch selection required");
-            return false
-        }
-        if (!_formData?.roomRefId) {
-            CustomAlert("warning", "Room selection required");
-            return false
-        }
-        if (!_formData?.cotRefId) {
-            CustomAlert("warning", "Cot selection required");
-            return false
-        }
-        if (!_formData?.dateOfAdmission) {
-            CustomAlert("warning", "Admission date required");
-            return false
-        }
-        return true
-    }
-
-    const handleReset = () => {
-        _setAvailable(false)
-        _setFormData({ id: 0, isActive: true, noDayStay: '1', noDayStayType: 'Month' })
-    }
-
-    const handleSubmitForm = () => {
-        _setLoading(true);
-        if (!checkValidation()) {
-            _setLoading(false);
-            return;
-        }
-        let totalPaid = 0;
-        if (_candidateDetails?.paymentStatus === "Paid") {
-            if (_candidateDetails?.noDayStayType === "Month") {
-                totalPaid = Number(_candidateDetails?.monthlyRent || '0') * Number(_candidateDetails?.noDayStay || '0') + Number(_candidateDetails?.admissionFee || '0') + Number(_candidateDetails?.advancePaid || '0');
-            } else {
-                totalPaid = Number(_candidateDetails?.monthlyRent || '0') / 30 * Number(_candidateDetails?.noDayStay || '0') + Number(_candidateDetails?.admissionFee || '0') + Number(_candidateDetails?.advancePaid || '0');
+  useEffect(() => {
+    if (formData?.branchRefId) {
+      getBranchRoomsList(formData?.branchRefId, 'admin')
+        .then((resp) => {
+          if (resp?.data?.status === 'success') {
+            setRoomList(resp?.data?.result);
+            if (formData?.cotRefId) {
+              const tempArr = resp?.data?.result?.find((f: any) => f?.id === formData?.roomRefId)?.Cots;
+              setCotList([...(tempArr || [])]);
             }
-        }
-        const transferBody = {
-            id: _candidateDetails?.id || 0,
-            candidateRefId: _candidateDetails?.candidateRefId || 0,
-            branchRefId: _formData?.branchRefId || 0,
-            roomRefId: _formData?.roomRefId || 0,
-            cotRefId: _formData?.cotRefId || 0,
-            dateOfAdmission: _formData?.dateOfAdmission || "",
-            admittedBy: user?.firstName + ' ' + user?.lastName || "",
-            dateOfNotice: _formData?.dateOfNotice || "",
-            admissionFee: _formData?.admissionFee || "",
-            advancePaid: _formData?.advancePaid || "",
-            monthlyRent: (_formData?.monthlyRent || '') || "",
-            noDayStayType: (_formData?.noDayStayType + '') || "Month",
-            noDayStay: (_formData?.noDayStay + '') || "1",
-            admissionStatus: "Inprogress",
-            dues: _candidateDetails?.dues || "",
-            isActive: true,
-        }
-        const vacateBody = {
-            id: _formData?.id || 0,
-            candidateRefId: transferBody?.candidateRefId,
-            branchRefId: transferBody?.branchRefId,
-            admissionRefId: transferBody?.id,
-            vacateType: 'Transfer Vacate',
-            vacateStatus: 'Approved',
-            feedbackBehavior: '',
-            feedbackBrief: '',
-            damageRemarks: '',
-            payableAdvancePaid: _candidateDetails?.paymentStatus === 'Paid' ? _candidateDetails?.advancePaid : '0',
-            payableAdmissionFee: _candidateDetails?.paymentStatus === 'Paid' ? _candidateDetails?.admissionFee : '0',
-            payableMonthlyRent: _candidateDetails?.paymentStatus === 'Paid' ? _candidateDetails?.monthlyRent : '0',
-            payablePenalty: _candidateDetails?.paymentStatus === 'Paid' ? '0' : '0',
-            payableDuePending: _candidateDetails?.paymentStatus === 'Paid' ? '0' : '0',
-            netAmountPayable: _candidateDetails?.paymentStatus === 'Paid' ? (totalPaid + '') : '0',
-            isActive: true
-        }
-
-        insertUpdateVacateDetails(vacateBody)
-            .then((resp) => {
-                if (resp?.data?.status === "success") {
-                    insertUpdateCandidateAdmission(transferBody)
-                        .then((resp) => {
-                            if (resp?.data?.status === "success") {
-                                CustomAlert("success", "Candidate transfer successfully");
-                                handleClearForm()
-                            }
-                        })
-                        .catch((err) => console.log(err))
-                        .finally(() => _setLoading(false))
-                }
-            })
-            .catch((err => console.log(err)))
+          }
+        })
+        .catch(console.log);
     }
+  }, [formData?.branchRefId]);
 
-    useEffect(() => {
-        if (_formData?.cotRefId) {
-            getCotsByCotId(_formData?.cotRefId)
-                .then((resp) => {
-                    if (resp?.data?.status === "success") {
-                        const cotDetail = resp?.data?.result;
-                        _setCotDetails(cotDetail)
-                        _setFormData({
-                            ..._formData,
-                            roomNumber: cotDetail?.roomNumber,
-                            cotNumber: cotDetail?.cotNumber,
-                            cotsType: cotDetail?.cotsType,
-                            roomTypeName: cotDetail?.roomTypeName,
-                            admissionFee: cotDetail?.admissionFee,
-                            advancePaid: cotDetail?.advanceAmount,
-                            oneDayStay: cotDetail?.oneDayStay,
-                            monthlyRent: cotDetail?.rentAmount || '0',
-                            noDayStay: cotDetail?.noDayStay || '1',
-                            noDayStayType: cotDetail?.noDayStayType || 'Month',
-                            dateOfNotice: cotDetail?.dateOfNotice ? cotDetail?.dateOfNotice : moment(cotDetail?.dateOfAdmission).add(1, 'months').format('YYYY-MM-DD')
-                        });
-                    } else {
-                        _setFormData({ id: 0, isActive: true, noDayStay: '1', noDayStayType: 'Month' })
-                    }
-                })
-                .catch((err) => {
-                    console.log(err)
-                    _setFormData({ id: 0, isActive: true, noDayStay: '1', noDayStayType: 'Month' })
-                })
-        }
-    }, [_formData?.cotRefId])
+  useEffect(() => {
+    getBranchGridList()
+      .then((resp) => { if (resp?.data?.status === 'success') setBranchList(resp?.data?.result?.results); })
+      .catch(console.log);
+  }, []);
 
-    useEffect(() => {
-        if (_formData?.branchRefId) {
-            getBranchRoomsList(_formData?.branchRefId, 'admin')
-                .then((resp) => {
-                    if (resp?.data?.status === "success") {
-                        _setRoomList(resp?.data?.result);
-                        if (_formData?.cotRefId) {
-                            const tempArr = resp?.data?.result?.find((fItem: any) => fItem?.id === _formData?.roomRefId)?.Cots
-                            _setCotList([...tempArr])
-                        }
-                    }
-                })
-                .catch(console.log)
-        }
-    }, [_formData?.branchRefId])
+  // Candidate search dialog columns
+  const candidateColumns: Column<any>[] = [
+    {
+      id: 'action', label: '', width: 100, render: (r) => (
+        r?.CandidateDetails?.blackListed === 'yes'
+          ? <StatusBadge status="Blocked" />
+          : <Button size="small" variant="outlined" onClick={() => handleSelectCandidate(r?.candidateRefId)}>Select</Button>
+      ),
+    },
+    { id: 'name', label: 'Name', render: (r) => r?.CandidateDetails?.name || '-' },
+    { id: 'email', label: 'Email', render: (r) => r?.CandidateDetails?.email || '-' },
+    { id: 'branch', label: 'Branch', render: (r) => r?.BranchDetails?.branchName || '-' },
+    { id: 'admission', label: 'Admission Date', render: (r) => r?.dateOfAdmission ? moment(r.dateOfAdmission).format('DD-MMM-YYYY') : '-' },
+  ];
 
-    useEffect(() => {
-        getOtherList()
-    }, [])
+  const InfoField = ({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) => (
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: gray[500], mb: 0.5 }}>
+        {icon} <Typography variant="caption">{label}</Typography>
+      </Box>
+      <Typography variant="body2" sx={{ ml: icon ? 3 : 0 }}>{value || '-'}</Typography>
+    </Box>
+  );
 
-    return <>
-        {!_editForm && <>
-            <div className="container py-3">
-                <div className="bg-field-gray  border rounded px-4 py-1">
-                    <div className="my-3 px-2">
-                        {!_candidateDetails?.id ? <form action="" onSubmit={(e) => { e.preventDefault(); handleSearchCandidate() }}>
-                            <div className="row align-items-center">
-                                <div className="col-md-5 my-3">
-                                    <TextField fullWidth sx={{ ...textFieldStyle }} placeholder="Search Candidate / Branch"
-                                        value={_searchCandidate} onChange={(e: any) => _setSearchCandidate(e.target.value)} />
-                                </div>
-                                <div className="col-md-2 my-3">
-                                    <Button variant="contained" className="px-3" color="primary" disabled={_loading} type="submit">Search</Button>
-                                </div>
-                            </div>
-                        </form>
-                            : <></>}
-                        {_candidateDetails?.id ? <>
-                            <div className="d-flex align-items-center py-2 borderBottomLight" role="button" onClick={handleClearForm}>
-                                <img height={24} draggable={false} src={IMAGES_ICON.BackIcon} />
-                                <div className="fw-bold">Back</div>
-                            </div>
-                            <div className="row align-items-center">
-                                <div className="col-md-3 mt-3">
-                                    <div className="text-muted fs14 mb-1">Candidate Id</div>
-                                    <div className="">{_candidateDetails?.candidateId}</div>
-                                </div>
-                                <div className="col-md-3 mt-3">
-                                    <div className="text-muted fs14 mb-1">Name</div>
-                                    <div className="">{_candidateDetails?.candidateName}</div>
-                                </div>
-                                <div className="col-md-3 mt-3">
-                                    <div className="text-muted fs14 mb-1">Mobile Number</div>
-                                    <div className="">{_candidateDetails?.candidateMobileNumber}</div>
+  return (
+    <>
+      <PageHeader title="Room Transfer" description="Transfer residents between rooms and branches" />
 
-                                </div>
-                                <div className="col-md-3 mt-3">
-                                    <div className="text-muted fs14 mb-1">Email</div>
-                                    <div className="">{_candidateDetails?.candidateEmail}</div>
-                                </div>
+      {/* Search Section */}
+      {!candidateDetails?.id && (
+        <Box sx={{ bgcolor: gray[50], border: `1px solid ${gray[200]}`, borderRadius: '12px', p: 3, mb: 3 }}>
+          <form onSubmit={(e) => { e.preventDefault(); handleSearchCandidate(); }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <TextField
+                fullWidth placeholder="Search resident by name, mobile or branch..."
+                value={searchCandidate} onChange={(e) => setSearchCandidate(e.target.value)}
+                size="small" sx={{ maxWidth: 480 }}
+              />
+              <Button variant="contained" disabled={loading} type="submit" startIcon={<Search size={16} />} sx={{ textTransform: 'none' }}>
+                Search
+              </Button>
+            </Box>
+          </form>
+        </Box>
+      )}
 
-                            </div>
-                        </> : <></>}
-                    </div>
-                </div>
-            </div>
-        </>}
-        {_candidateDetails?.id ? <div className="container py-3">
-            <div className="mx-auto fw-bold">Transfer From:</div>
-            <div className="bg-field-gray  border rounded px-4 py-1">
-                <div className="row justify-content-between pt-2">
-                    <div className="col-md-2 my-2">
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.LocationPinIcon} /> Branch Name</div>
-                        <div className="fs14 mb-1 ms-4 w-75">{_candidateDetails?.branchName}</div>
-                    </div>
-                    <div className="col-md-2 my-2">
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.RoomsIcon} /> Room</div>
-                        <div className="fs14 mb-1 ms-4 w-75">{_candidateDetails?.roomNumber}</div>
-                    </div>
-                    <div className="col-md-2 my-2" onClick={() => _setLoading(false)}>
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.RoomTypeIcon} /> Room Type</div>
-                        <div className="fs14 mb-1 ms-4 w-75">{_candidateDetails?.roomTypeName}</div>
-                    </div>
-                    <div className="col-md-2 my-2">
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.CotIcon} /> Cot</div>
-                        <div className="fs14 mb-1 ms-4 w-75">{_candidateDetails?.cotNumber}</div>
-                    </div>
-                    <div className="col-md-2 my-2">
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.CalenderIcon} /> Admission Date</div>
-                        <div className="fs14 mb-1 ms-4 w-75">{moment(_candidateDetails?.dateOfAdmission)?.format('DD-MM-YYYY')}</div>
-                    </div>
-                    <div className="col-md-2 my-2">
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.BoyUserIcon} /> Admitted By</div>
-                        <div className="fs14 mb-1 ms-4 w-75">{_candidateDetails?.admittedBy}</div>
-                    </div>
-                </div>
-            </div>
-            <div className="mx-auto fw-bold mt-3">Transfer To:</div>
-            <div className="bg-field-gray  border rounded px-4 py-1">
-                {/* <div className="d-flex align-items-center py-2 borderBottomLight" role="button" onClick={handleGoBack}>
-                    <img height={24} draggable={false} src={IMAGES_ICON.BackIcon} />
-                    <div className="fw-bold">Back</div>
-                </div> */}
-                <div className="row justify-content-between pt-2">
-                    <div className="col-md-2 my-2">
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.LocationPinIcon} /> Branch Name</div>
-                        <FormControl className="ms-4 w-75" variant="standard" fullWidth>
-                            <Select value={_formData?.branchRefId} onChange={(e) => changeFormData("branchRefId", e.target.value)}
-                                disabled={_available} label=" " sx={{ fontSize: "14px" }} disableUnderline>
-                                {_branchList?.map((mItem: any, mIndex: number) =>
-                                    <MenuItem className="fs14" key={mIndex} value={mItem?.id}>{mItem?.branchName}</MenuItem>
-                                )}
-                            </Select>
-                        </FormControl>
-                    </div>
-                    <div className="col-md-2 my-2">
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.RoomsIcon} /> Room</div>
-                        <FormControl className="ms-4 w-75" variant="standard" fullWidth>
-                            <Select value={_formData?.roomRefId}
-                                disabled={_available} label=" " sx={{ fontSize: "14px" }} disableUnderline>
-                                {_roomList?.map((mItem: any, mIndex: number) =>
-                                    <MenuItem className="fs14" key={mIndex} value={mItem?.id} onClick={() => {
-                                        _setCotList([...mItem?.Cots]);
-                                        _setFormData({ ..._formData, roomRefId: mItem?.id, roomTypeName: mItem?.roomTypeName })
-                                    }}>{mItem?.roomNumber}</MenuItem>
-                                )}
-                            </Select>
-                        </FormControl>
-                    </div>
-                    <div className="col-md-2 my-2" onClick={() => _setLoading(false)}>
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.RoomTypeIcon} /> Room Type</div>
-                        <div className="fs14 mb-1 ms-4 w-75">{_formData?.roomTypeName}</div>
-                    </div>
-                    <div className="col-md-2 my-2">
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.CotIcon} /> Cot</div>
-                        <FormControl className="ms-4 w-75" variant="standard" fullWidth>
-                            <Select value={_formData?.cotRefId}
-                                disabled={_available} label=" " sx={{ fontSize: "14px" }} disableUnderline>
-                                {_cotList?.map((mItem: any, mIndex: number) =>
-                                    <MenuItem className="fs14" key={mIndex} value={mItem?.id} onClick={() => handleCotAndFeeUpdate(mItem)}>{mItem?.cotNumber} - {mItem?.CotType?.type}</MenuItem>
-                                )}
-                            </Select>
-                        </FormControl>
-                    </div>
-                    <div className="col-md-2 my-2">
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.CalenderIcon} /> Admission Date</div>
-                        <TextField className="ms-4 w-75" fullWidth sx={{ ...textFieldStyle, padding: "8px 0px" }} variant="standard" type="date" onKeyDown={DisableKeyUpDown}
-                            value={_formData?.dateOfAdmission} onChange={(e: any) => changeFormData('dateOfAdmission', e.target.value)}
-                            slotProps={{ input: { readOnly: _available } }}
-                            inputProps={{ min: new Date().toISOString().split('T')[0], }} />
-                    </div>
-                    <div className="col-md-2 my-2">
-                        <div className="text-muted fs14 mb-1 d-flex align-items-center gap-1"><img draggable="false" height={18} src={IMAGES_ICON.BoyUserIcon} /> Transferred By</div>
-                        <div className="fs14 mb-1 ms-4 w-75">{user?.firstName + ' ' + user?.lastName}</div>
-                    </div>
-                </div>
-            </div>
-            {_available && <>
-                <hr />
-                <div className="row mt-3">
-                    <div className="fw-bold">Stay Duration</div>
-                    <div className="col-md-3 my-3">
-                        <div className="text-muted fs14 mb-1 required">Duration Type</div>
-                        <CustomAutoSelect value={_formData?.noDayStayType}
-                            onChange={(value: any) => { changeFormData('noDayStayType', value || '') }}
-                            placeholder={"Select sharing type"}
-                            menuItem={(_formData?.oneDayStay ? ['Days', 'Month'] : ['Month'])?.map((item: any) => {
-                                return { title: item, value: item }
-                            })} />
-                    </div>
-                    <div className="col-md-3 my-3">
-                        <div className="text-muted fs14 mb-1 required">Duration Count</div>
-                        <TextField fullWidth sx={{ ...textFieldStyle }}
-                            value={_formData?.noDayStay}
-                            inputProps={{ style: { textAlign: "center" } }}
-                            InputProps={{
-                                readOnly: true,
-                                startAdornment: <RemoveCircleOutlineRounded className={`${_formData?.noDayStay > 1 ? 'text-danger' : 'text-muted'}`} role="button"
-                                    onClick={() => _formData?.noDayStay > 1 && changeFormData('noDayStay', Number(_formData?.noDayStay) - 1)} />,
-                                endAdornment: <AddCircleOutlineRounded className={`${'text-success'}`} role="button"
-                                    onClick={() => changeFormData('noDayStay', Number(_formData?.noDayStay) + 1)} />,
-                            }} />
-                    </div>
-                </div>
-                <hr />
-                <div className="row">
-                    <div className="fw-bold">Room Details</div>
-                    <div className="col-md-3 my-3">
-                        <div className="text-muted fs14 mb-1">Room Number</div>
-                        <div className="">{_formData?.roomNumber}</div>
-                    </div>
-                    <div className="col-md-3 my-3">
-                        <div className="text-muted fs14 mb-1">Cot No</div>
-                        <div className="">{_formData?.cotNumber}</div>
-                    </div>
-                    <div className="col-md-3 my-3">
-                        <div className="text-muted fs14 mb-1">Cot Type</div>
-                        <div className="">{_formData?.cotsType}</div>
-                    </div>
-                    <div className="col-md-3 my-3">
-                        <div className="text-muted fs14 mb-1">Room Type</div>
-                        <div className="">{_formData?.roomTypeName}</div>
-                    </div>
-                    <div></div>
-                    <div className="col-md-3 my-3">
-                        <div className="text-muted fs14 mb-1">Date of Admission</div>
-                        <div className="">{moment(_formData?.dateOfAdmission)?.format('DD-MMM-YYYY')}</div>
-                    </div>
-                    <div className="col-md-3 my-3">
-                        <div className="text-muted fs14 mb-1">Date of Notice</div>
-                        <div className="">{_formData?.dateOfNotice ? moment(_formData?.dateOfNotice)?.format('DD-MMM-YYYY') : ''}</div>
-                    </div>
-                </div>
-                <hr />
-                <div className="row">
-                    <div className="fw-bold">Fee Details</div>
-                    <div className="col-md-3 my-3">
-                        <div className="text-muted fs14 mb-1">Admission Fee</div>
-                        <div className="">₹ {_formData?.admissionFee}</div>
-                        {/* <TextField fullWidth sx={{ ...textFieldStyle }} type="number" onKeyDown={DisableKeyUpDown}
-                                    value={_formData?.admissionFee}
-                                    InputProps={{ readOnly: true, startAdornment: <span className="text-muted me-1">₹</span> }} /> */}
-                    </div>
-                    <div className="col-md-3 my-3">
-                        <div className="text-muted fs14 mb-1">Advance Pay</div>
-                        <div className="">₹ {_formData?.advancePaid}</div>
+      {/* Candidate details + transfer */}
+      {candidateDetails?.id && (
+        <Box sx={{ mb: 3 }}>
+          {/* Back button */}
+          <Box onClick={handleClearForm} sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', mb: 2 }}>
+            <ArrowLeft size={20} color={gray[600]} />
+            <Typography sx={{ fontWeight: 600, color: gray[700] }}>Back</Typography>
+          </Box>
 
-                        {/* <TextField fullWidth sx={{ ...textFieldStyle }} type="number" onKeyDown={DisableKeyUpDown}
-                                    value={_formData?.advancePaid}
-                                    InputProps={{ readOnly: true, startAdornment: <span className="text-muted me-1">₹</span> }} /> */}
-                    </div>
-                    <div className="col-md-3 my-3">
-                        <div className="text-muted fs14 mb-1">Monthly Rent</div>
-                        <div className="">₹ {_formData?.monthlyRent}</div>
+          {/* Candidate info */}
+          <Box sx={{ bgcolor: gray[50], border: `1px solid ${gray[200]}`, borderRadius: '12px', p: 3, mb: 3 }}>
+            <Grid2 container spacing={3}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <FormField label="Resident ID"><Typography variant="body2">{candidateDetails?.candidateId}</Typography></FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <FormField label="Name"><Typography variant="body2">{candidateDetails?.candidateName}</Typography></FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <FormField label="Mobile"><Typography variant="body2">{candidateDetails?.candidateMobileNumber}</Typography></FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <FormField label="Email"><Typography variant="body2">{candidateDetails?.candidateEmail}</Typography></FormField>
+              </Grid2>
+            </Grid2>
+          </Box>
 
-                        {/* <TextField fullWidth sx={{ ...textFieldStyle }} value={_formData?.monthlyRent}
-                                    InputProps={{ readOnly: true, startAdornment: <span className="text-muted me-1">₹</span> }} /> */}
-                    </div>
-                </div>
-            </>}
-            {PageAccess === 'Write' && <div className="my-3 text-center d-flex justify-content-center gap-3 align-items-center">
-                <Button variant="outlined" color="primary" disabled={_loading} className="" onClick={handleReset}>Reset</Button>
-                {_available ? <Button variant="contained" color="primary" disabled={_loading} className="" onClick={handleSubmitForm}>Update</Button>
-                    : <Button variant="contained" color="primary" disabled={_loading} className="" onClick={handleCheckAvailable}>Check Availability</Button>}
-            </div>}
-        </div> : <></>}
+          {/* Transfer From */}
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Transfer From</Typography>
+          <Box sx={{ bgcolor: gray[50], border: `1px solid ${gray[200]}`, borderRadius: '12px', p: 3, mb: 3 }}>
+            <Grid2 container spacing={2}>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}><InfoField label="Branch" value={candidateDetails?.branchName} icon={<MapPin size={14} />} /></Grid2>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}><InfoField label="Room" value={candidateDetails?.roomNumber} icon={<DoorOpen size={14} />} /></Grid2>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}><InfoField label="Room Type" value={candidateDetails?.roomTypeName} icon={<DoorOpen size={14} />} /></Grid2>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}><InfoField label="Bed" value={candidateDetails?.cotNumber} icon={<BedDouble size={14} />} /></Grid2>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}><InfoField label="Admission Date" value={moment(candidateDetails?.dateOfAdmission).format('DD-MM-YYYY')} icon={<Calendar size={14} />} /></Grid2>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}><InfoField label="Admitted By" value={candidateDetails?.admittedBy} icon={<UserRound size={14} />} /></Grid2>
+            </Grid2>
+          </Box>
 
-        <CustomDialogue displaySize={"md"} title={'Select Candidate'} dialogueFlag={_candidateList?.length > 0} onCloseClick={() => _setCandidateList([])}
-            mainContent={<div className="my-2">
-                <TableContainer className="tableBorder rounded">
-                    <Table size="small" sx={{ ...customTableTemplate }} >
-                        <TableHead>
-                            <TableRow className="px-2" sx={{ ...customTableHeader }}>
-                                <TableCell className="fw-bold text-nowrap"></TableCell>
-                                <TableCell className="fw-bold text-nowrap">Name</TableCell>
-                                <TableCell className="fw-bold text-nowrap">Email</TableCell>
-                                <TableCell className="fw-bold text-nowrap">Branch Name</TableCell>
-                                <TableCell className="fw-bold text-nowrap">Date of Admission</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {_candidateList?.map((item: any, index: number) =>
-                                <TableRow key={index}>
-                                    <TableCell>
-                                        {item?.CandidateDetails?.blackListed === "yes" ?
-                                            <Button className="" size="small" variant="contained" color="error">Blocked</Button> :
-                                            <Button className="" size="small" variant="outlined" color="secondary" onClick={() => handleSelectCandidate(item?.candidateRefId)}>Select</Button>}
-                                    </TableCell>
-                                    <TableCell className="text-muted text-nowrap">{item?.CandidateDetails?.name}</TableCell>
-                                    <TableCell className="text-muted text-nowrap">{item?.CandidateDetails?.email}</TableCell>
-                                    <TableCell className="text-muted text-nowrap">{item?.BranchDetails?.branchName}</TableCell>
-                                    <TableCell className="text-muted text-nowrap">{item?.dateOfAdmission && moment(item?.dateOfAdmission)?.format('DD-MMM-YYYY')}</TableCell>
-                                </TableRow>)}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </div>} />
+          {/* Transfer To */}
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Transfer To</Typography>
+          <Box sx={{ bgcolor: '#fff', border: `1px solid ${gray[200]}`, borderRadius: '12px', p: 3, mb: 3 }}>
+            <Grid2 container spacing={2}>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}>
+                <FormField label="Branch">
+                  <FormControl fullWidth size="small">
+                    <Select value={formData?.branchRefId || ''} onChange={(e) => changeFormData('branchRefId', e.target.value)} disabled={available} displayEmpty>
+                      <MenuItem value="" disabled>Select</MenuItem>
+                      {branchList.map((m: any) => <MenuItem key={m.id} value={m.id}>{m.branchName}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}>
+                <FormField label="Room">
+                  <FormControl fullWidth size="small">
+                    <Select value={formData?.roomRefId || ''} disabled={available} displayEmpty>
+                      <MenuItem value="" disabled>Select</MenuItem>
+                      {roomList.map((m: any) => (
+                        <MenuItem key={m.id} value={m.id} onClick={() => {
+                          setCotList([...m.Cots]);
+                          setFormData({ ...formData, roomRefId: m.id, roomTypeName: m.roomTypeName });
+                        }}>{m.roomNumber}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}>
+                <FormField label="Room Type">
+                  <Typography variant="body2">{formData?.roomTypeName || '-'}</Typography>
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}>
+                <FormField label="Bed">
+                  <FormControl fullWidth size="small">
+                    <Select value={formData?.cotRefId || ''} disabled={available} displayEmpty>
+                      <MenuItem value="" disabled>Select</MenuItem>
+                      {cotList.map((m: any) => (
+                        <MenuItem key={m.id} value={m.id} onClick={() => handleCotAndFeeUpdate(m)}>
+                          {m.cotNumber} - {m.CotType?.type}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}>
+                <FormField label="Admission Date">
+                  <TextField fullWidth size="small" type="date" onKeyDown={DisableKeyUpDown}
+                    value={formData?.dateOfAdmission || ''} onChange={(e) => changeFormData('dateOfAdmission', e.target.value)}
+                    inputProps={{ min: new Date().toISOString().split('T')[0] }}
+                    slotProps={{ input: { readOnly: available } }}
+                  />
+                </FormField>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 4, md: 2 }}>
+                <FormField label="Transferred By">
+                  <Typography variant="body2">{user?.firstName + ' ' + user?.lastName}</Typography>
+                </FormField>
+              </Grid2>
+            </Grid2>
+          </Box>
+
+          {/* Stay Duration & Fee details (shown when available) */}
+          {available && (
+            <>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Stay Duration</Typography>
+              <Grid2 container spacing={3} sx={{ mb: 3 }}>
+                <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                  <FormField label="Duration Type" required>
+                    <CustomAutoSelect value={formData?.noDayStayType}
+                      onChange={(value: any) => changeFormData('noDayStayType', value || '')}
+                      placeholder="Select type"
+                      menuItem={(formData?.oneDayStay ? ['Days', 'Month'] : ['Month']).map((item: any) => ({ title: item, value: item }))} />
+                  </FormField>
+                </Grid2>
+                <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                  <FormField label="Duration Count" required>
+                    <TextField fullWidth size="small"
+                      value={formData?.noDayStay}
+                      inputProps={{ style: { textAlign: 'center' } }}
+                      InputProps={{
+                        readOnly: true,
+                        startAdornment: <IconButton size="small" disabled={formData?.noDayStay <= 1}
+                          onClick={() => formData?.noDayStay > 1 && changeFormData('noDayStay', Number(formData?.noDayStay) - 1)}>
+                          <Minus size={16} />
+                        </IconButton>,
+                        endAdornment: <IconButton size="small"
+                          onClick={() => changeFormData('noDayStay', Number(formData?.noDayStay) + 1)}>
+                          <Plus size={16} />
+                        </IconButton>,
+                      }} />
+                  </FormField>
+                </Grid2>
+              </Grid2>
+
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Room Details</Typography>
+              <Grid2 container spacing={3} sx={{ mb: 3 }}>
+                <Grid2 size={{ xs: 6, md: 3 }}><FormField label="Room Number"><Typography variant="body2">{formData?.roomNumber}</Typography></FormField></Grid2>
+                <Grid2 size={{ xs: 6, md: 3 }}><FormField label="Bed No"><Typography variant="body2">{formData?.cotNumber}</Typography></FormField></Grid2>
+                <Grid2 size={{ xs: 6, md: 3 }}><FormField label="Bed Type"><Typography variant="body2">{formData?.cotsType}</Typography></FormField></Grid2>
+                <Grid2 size={{ xs: 6, md: 3 }}><FormField label="Room Type"><Typography variant="body2">{formData?.roomTypeName}</Typography></FormField></Grid2>
+                <Grid2 size={{ xs: 6, md: 3 }}><FormField label="Admission Date"><Typography variant="body2">{moment(formData?.dateOfAdmission).format('DD-MMM-YYYY')}</Typography></FormField></Grid2>
+                <Grid2 size={{ xs: 6, md: 3 }}><FormField label="Notice Date"><Typography variant="body2">{formData?.dateOfNotice ? moment(formData?.dateOfNotice).format('DD-MMM-YYYY') : ''}</Typography></FormField></Grid2>
+              </Grid2>
+
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Fee Details</Typography>
+              <Grid2 container spacing={3} sx={{ mb: 3 }}>
+                <Grid2 size={{ xs: 6, md: 3 }}><FormField label="Admission Fee"><Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>&#8377; {formData?.admissionFee}</Typography></FormField></Grid2>
+                <Grid2 size={{ xs: 6, md: 3 }}><FormField label="Advance Pay"><Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>&#8377; {formData?.advancePaid}</Typography></FormField></Grid2>
+                <Grid2 size={{ xs: 6, md: 3 }}><FormField label="Monthly Rent"><Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>&#8377; {formData?.monthlyRent}</Typography></FormField></Grid2>
+              </Grid2>
+            </>
+          )}
+
+          {/* Actions */}
+          {PageAccess === 'Write' && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
+              <Button variant="outlined" disabled={loading} onClick={handleReset} sx={{ textTransform: 'none' }}>Reset</Button>
+              {available ? (
+                <Button variant="contained" disabled={loading} onClick={handleSubmitForm} sx={{ textTransform: 'none' }}>Update</Button>
+              ) : (
+                <Button variant="contained" disabled={loading} onClick={handleCheckAvailable} sx={{ textTransform: 'none' }}>Check Availability</Button>
+              )}
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* Candidate Selection Dialog */}
+      <DialogModal
+        open={candidateList?.length > 0}
+        onClose={() => setCandidateList([])}
+        title="Select Resident"
+        maxWidth="md"
+      >
+        <DataTable columns={candidateColumns} data={candidateList} emptyTitle="No residents found" />
+      </DialogModal>
     </>
+  );
 }

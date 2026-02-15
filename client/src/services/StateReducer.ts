@@ -4,7 +4,8 @@ export const initialState = {
     user: userSession(),
     branchDetails: null,
     admissionDetails: null,
-    pageAccess: null
+    pageAccess: null,
+    sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
 };
 
 const Reducer = (state: any, action: any) => {
@@ -29,6 +30,14 @@ const Reducer = (state: any, action: any) => {
                 ...state,
                 pageAccess: action.data
             }
+        case 'TOGGLE_SIDEBAR': {
+            const next = !state.sidebarCollapsed;
+            localStorage.setItem('sidebarCollapsed', String(next));
+            return {
+                ...state,
+                sidebarCollapsed: next
+            }
+        }
         default:
             return state;
     }
