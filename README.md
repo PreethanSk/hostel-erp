@@ -271,4 +271,4 @@ User (Admin/Manager)
 
 ## License
 
-This project is for educational purposes (college project).
+Proprietary. All rights reserved.
