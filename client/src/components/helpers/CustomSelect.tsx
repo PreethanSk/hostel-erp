@@ -2,6 +2,7 @@ import { Checkbox, FormControl, FormHelperText, ListItemText, MenuItem, Select, 
 import { textFieldStyle } from "../../services/HelperService";
 import Autocomplete from "@mui/material/Autocomplete";
 import { IMAGES_ICON } from "../../assets/images/exportImages";
+import { ChevronDown } from "lucide-react";
 
 export default function CustomSelect({ className = "", placeholder = "Select", menuItem = [], value = "", onChange, padding = "none", error = false, helperText = "", }: any) {
   return (
@@ -166,32 +167,21 @@ export function CustomAutoMultiSelect({
 export function CustomFilterMultiSelect({ className = '', placeholder = 'Select', menuItem = [], value = [], onChange, error = false, helperText = "", }: any) {
   return (
     <>
-      <FormControl size="small" fullWidth className={className} error={error} sx={{ ...textFieldStyle }}>
-        <Select className={className} multiple displayEmpty value={value} onChange={onChange}
+      <FormControl size="small" fullWidth className={className} error={error}>
+        <Select multiple displayEmpty value={value} onChange={onChange}
           renderValue={(selected: any) => {
             if (!selected.length) {
-              return <span style={{ color: '#a2a2a2', fontWeight: 300 }}>{placeholder}</span>;
+              return <span style={{ color: '#98A2B3', fontSize: 14 }}>{placeholder}</span>;
             }
             return `${selected.length} selected`;
           }}
           sx={{
-            "& legend": { display: "none" },
-            "& fieldset": { top: 0 },
-            alignContent: 'center',
             '& .MuiSelect-select': {
-              padding: "0px 6px"//padding ? `${padding}` : 'none',
-            },
-            '& .MuiSelect-select::before': {
-              content: value ? "''" : "'" + `${placeholder}` + "'",
-              color: "#a2a2a2",
-              fontSize: "14px !important",
-              fontWeight: 300
+              padding: '8px 14px',
             },
           }}
           IconComponent={(props) => (
-            <span role="button" {...props} style={{ marginTop: -4 }}>
-              <img height={12} className="filterMuted" src={IMAGES_ICON.DownLineIcon} alt="dropdown" />
-            </span>
+            <ChevronDown size={16} {...props} style={{ position: 'absolute', right: 12, top: 'calc(50% - 8px)', pointerEvents: 'none', color: '#667085' }} />
           )}
         >
           {menuItem.map((item: any, index: number) => (
@@ -202,7 +192,7 @@ export function CustomFilterMultiSelect({ className = '', placeholder = 'Select'
           ))}
         </Select>
       </FormControl>
-      {helperText && <FormHelperText className="text-danger">{helperText}</FormHelperText>}
+      {helperText && <FormHelperText sx={{ color: 'error.main' }}>{helperText}</FormHelperText>}
     </>
   );
 }

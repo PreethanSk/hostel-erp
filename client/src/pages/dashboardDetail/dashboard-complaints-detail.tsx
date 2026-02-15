@@ -1,39 +1,12 @@
-import { useEffect, useState } from "react";
-import Table from "@mui/material/Table";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import TableCell from "@mui/material/TableCell";
-import TableBody from "@mui/material/TableBody";
-import { TextField } from "@mui/material";
-import { IMAGES_ICON } from "../../assets/images/exportImages";
-import { SkeletonProviderTables } from "../../providers/SkeletonProvider";
-import { customTableTemplate, customTableHeader, getExportEXCEL, } from "../../services/HelperService";
-import CustomDialogue from "../../components/helpers/CustomDialogue";
-import { getDashboardComplaintsDetail } from "../../models";
-
-interface ComplaintDetail {
-  creator?: string;
-  branchName?: string;
-  roomNumber?: string;
-  cotNumber?: string;
-  complaintDate?: string;
-  mobileNumber?: string;
-  natureOfComplaint?: string;
-  assignTo?: string;
-  closedBy?: string;
-  status?: string;
-  // Add backend fields for mapping
-  issueTypeName?: string;
-  issueSubCategoryName?: string;
-  assignedToName?: string;
-  closedByName?: string;
-  description?: string;
-  imageUrl?: string;
-  createdBy?: string;
-  assignedBy?: string;
-  pickedOn?: string;
-  closedOn?: string;
-}
+import { useEffect, useState, useMemo } from 'react';
+import { Box, Link } from '@mui/material';
+import { getExportEXCEL } from '../../services/HelperService';
+import { getDashboardComplaintsDetail } from '../../models';
+import DialogModal from '../../components/shared/DialogModal';
+import DataTable, { Column } from '../../components/shared/DataTable';
+import SearchInput from '../../components/shared/SearchInput';
+import ExportButton from '../../components/shared/ExportButton';
+import StatusBadge from '../../components/shared/StatusBadge';
 
 interface Props {
   open: boolean;
@@ -46,256 +19,162 @@ interface Props {
   serviceProviderId?: string;
 }
 
+interface ComplaintDetail {
+  creator?: string;
+  branchName?: string;
+  roomNumber?: string;
+  cotNumber?: string;
+  complaintDate?: string;
+  mobileNumber?: string;
+  natureOfComplaint?: string;
+  assignTo?: string;
+  closedBy?: string;
+  status?: string;
+  issueTypeName?: string;
+  issueSubCategoryName?: string;
+  assignedToName?: string;
+  closedByName?: string;
+  description?: string;
+  imageUrl?: string;
+  createdBy?: string;
+  assignedBy?: string;
+  pickedOn?: string;
+  closedOn?: string;
+}
+
+const TITLE_MAP: Record<string, string> = {
+  Open: 'Open Complaints',
+  InProgress: 'In Progress Complaints',
+  Hold: 'On Hold Complaints',
+  Closed: 'Resolved Complaints',
+  Reject: 'Rejected Complaints',
+};
+
 export default function DashboardComplaintsDetailModal({
-  open,
-  onClose,
-  fromDate,
-  toDate,
-  branchId,
-  type = "Open",
-  detailedData,
-  serviceProviderId,
+  open, onClose, fromDate, toDate, branchId, type = 'Open', detailedData, serviceProviderId,
 }: Props) {
   const [data, setData] = useState<ComplaintDetail[]>([]);
   const [loading, setLoading] = useState(false);
-  const [_search, _setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (!open) return;
     if (detailedData) {
-      let groupKey = "Open";
-      if (type === "InProgress") groupKey = "InProgress";
-      else if (type === "Hold") groupKey = "Hold";
-      else if (type === "Closed") groupKey = "Closed";
-      else if (type === "Reject") groupKey = "Reject";
-      const group = detailedData?.[groupKey] || [];
-      const mapped = group.map((item: ComplaintDetail) => ({
-        creator: item.creator,
-        branchName: item.branchName,
-        roomNumber: item.roomNumber,
-        cotNumber: item.cotNumber,
-        complaintDate: item.complaintDate,
-        mobileNumber: item.mobileNumber || "-",
-        natureOfComplaint: item.issueTypeName,
-        issueSubCategoryName: item.issueSubCategoryName,
-        assignTo: item.assignedToName,
-        closedBy: item.closedByName || "-",
-        status: item.status,
-        description: item.description,
-        imageUrl: item.imageUrl,
-        createdBy: item.createdBy,
-        assignedBy: item.assignedBy,
-        pickedOn: item.pickedOn,
-        closedOn: item.closedOn,
-      }));
-      setData(mapped);
+      const group = detailedData?.[type] || [];
+      setData(mapRows(group));
       return;
     }
     setLoading(true);
     let queryStr = `?from=${fromDate}&to=${toDate}`;
     if (branchId) queryStr += `&branchId=${branchId}`;
     if (serviceProviderId) queryStr += `&serviceProviderId=${serviceProviderId}`;
-    getDashboardComplaintsDetail(queryStr).then((resp: any) => {
-      if (resp?.data?.status === "success") {
-        let groupKey = "Open";
-        if (type === "InProgress") groupKey = "InProgress";
-        else if (type === "Hold") groupKey = "Hold";
-        else if (type === "Closed") groupKey = "Closed";
-        else if (type === "Reject") groupKey = "Reject";
-        const group = resp.data.result?.[groupKey] || [];
-        const mapped = group.map((item: ComplaintDetail) => ({
-          creator: item.creator,
-          branchName: item.branchName,
-          roomNumber: item.roomNumber,
-          cotNumber: item.cotNumber,
-          complaintDate: item.complaintDate,
-          mobileNumber: item.mobileNumber || "-",
-          natureOfComplaint: item.issueTypeName,
-          issueSubCategoryName: item.issueSubCategoryName,
-          assignTo: item.assignedToName,
-          closedBy: item.closedByName || "-",
-          status: item.status,
-          description: item.description,
-          imageUrl: item.imageUrl,
-          createdBy: item.createdBy,
-          assignedBy: item.assignedBy,
-          pickedOn: item.pickedOn,
-          closedOn: item.closedOn,
-        }));
-        setData(mapped);
-      } else {
-        setData([]);
-      }
-      setLoading(false);
-    });
+    getDashboardComplaintsDetail(queryStr)
+      .then((resp: any) => {
+        if (resp?.data?.status === 'success') {
+          setData(mapRows(resp.data.result?.[type] || []));
+        } else {
+          setData([]);
+        }
+      })
+      .finally(() => setLoading(false));
   }, [open, fromDate, toDate, branchId, type, detailedData, serviceProviderId]);
 
-  const getPrintTableHeadBody = () => {
-    const header = [
-      "S. No",
-      "Creator",
-      "Branch",
-      "Room",
-      "Cot",
-      "Complaint Date",
-      "Mobile No",
-      "Nature of Complaint",
-      "Sub Category",
-      "Description",
-      "Images",
-      "Created By",
-      "Assign To",
-      "Assigned By",
-      "Picked On",
-      "Closed On",
-      "Closed By",
-      "Status",
-    ];
-    const body = data?.map((item: ComplaintDetail, index: number) => [
-      index + 1,
-      item?.creator || "-",
-      item?.branchName || "-",
-      item?.roomNumber || "-",
-      item?.cotNumber || "-",
-      item?.complaintDate || "-",
-      item?.mobileNumber || "-",
-      item?.natureOfComplaint || "-",
-      item?.issueSubCategoryName || "-",
-      item?.description || "-",
-      item?.imageUrl || "-",
-      item?.createdBy || "-",
-      item?.assignTo || "-",
-      item?.assignedBy || "-",
-      item?.pickedOn || "-",
-      item?.closedOn || "-",
-      item?.closedBy || "-",
-      item?.status || "-",
-    ]);
-    return { header, body };
-  };
+  function mapRows(group: any[]): ComplaintDetail[] {
+    return group.map((item: any) => ({
+      creator: item.creator,
+      branchName: item.branchName,
+      roomNumber: item.roomNumber,
+      cotNumber: item.cotNumber,
+      complaintDate: item.complaintDate,
+      mobileNumber: item.mobileNumber || '-',
+      natureOfComplaint: item.issueTypeName,
+      issueSubCategoryName: item.issueSubCategoryName,
+      assignTo: item.assignedToName,
+      closedBy: item.closedByName || '-',
+      status: item.status,
+      description: item.description,
+      imageUrl: item.imageUrl,
+      createdBy: item.createdBy,
+      assignedBy: item.assignedBy,
+      pickedOn: item.pickedOn,
+      closedOn: item.closedOn,
+    }));
+  }
+
+  const filteredData = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return data;
+    return data.filter((item) =>
+      Object.values(item).some((v) => v?.toString().toLowerCase().includes(q))
+    );
+  }, [data, search]);
+
+  const columns: Column<ComplaintDetail>[] = [
+    { id: 'sno', label: '#', width: 50, render: (_, i) => i + 1 },
+    { id: 'creator', label: 'Creator', render: (r) => r.creator || '-' },
+    { id: 'branch', label: 'Branch', render: (r) => r.branchName || '-' },
+    { id: 'room', label: 'Room', render: (r) => r.roomNumber || '-' },
+    { id: 'cot', label: 'Bed', render: (r) => r.cotNumber || '-' },
+    { id: 'date', label: 'Date', render: (r) => r.complaintDate || '-' },
+    { id: 'mobile', label: 'Mobile', render: (r) => r.mobileNumber || '-' },
+    { id: 'issue', label: 'Issue', render: (r) => r.natureOfComplaint || '-' },
+    { id: 'subCategory', label: 'Sub Category', render: (r) => r.issueSubCategoryName || '-' },
+    { id: 'description', label: 'Description', minWidth: 160, render: (r) => r.description || '-' },
+    {
+      id: 'images', label: 'Images', render: (r) => {
+        if (!r.imageUrl) return '-';
+        return (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {r.imageUrl.split(',').map((url: string, idx: number) => (
+              <Link key={idx} href={url.trim()} target="_blank" rel="noopener noreferrer" sx={{ fontSize: '12px' }}>
+                Img {idx + 1}
+              </Link>
+            ))}
+          </Box>
+        );
+      },
+    },
+    { id: 'createdBy', label: 'Created By', render: (r) => r.createdBy || '-' },
+    { id: 'assignTo', label: 'Assigned To', render: (r) => r.assignTo || '-' },
+    { id: 'assignedBy', label: 'Assigned By', render: (r) => r.assignedBy || '-' },
+    { id: 'pickedOn', label: 'Picked On', render: (r) => r.pickedOn || '-' },
+    { id: 'closedOn', label: 'Closed On', render: (r) => r.closedOn || '-' },
+    { id: 'closedBy', label: 'Closed By', render: (r) => r.closedBy || '-' },
+    { id: 'status', label: 'Status', render: (r) => r.status ? <StatusBadge status={r.status} /> : '-' },
+  ];
 
   const exportEXCEL = () => {
-    const { header, body } = getPrintTableHeadBody();
-    getExportEXCEL({ header, body, fileName: "Complaints Details" });
+    const header = columns.map((c) => c.label);
+    const body = filteredData.map((item, idx) => columns.map((c) => {
+      const node = c.render(item, idx);
+      return typeof node === 'string' || typeof node === 'number' ? node : '-';
+    }));
+    getExportEXCEL({ header, body, fileName: 'Complaints Details' });
   };
-
-  let title = "Open Complaints";
-  if (type === "InProgress") title = "In Progress Complaints";
-  if (type === "Hold") title = "On Hold Complaints";
-  if (type === "Closed") title = "Resolved Complaints";
-  if (type === "Reject") title = "Rejected Complaints";
 
   if (!open) return null;
 
   return (
-    <CustomDialogue
-      displaySize={"lg"}
-      title={title}
-      dialogueFlag={true}
-      onCloseClick={onClose}
-      mainContent={
-        <div className="my-2">
-          <Table size="small" sx={{ ...customTableTemplate }}>
-            <TableHead>
-              <TableRow sx={{ ...customTableHeader }}>
-                <TableCell className="fw-bold text-nowrap">S.No</TableCell>
-                <TableCell className="fw-bold text-nowrap">Creator</TableCell>
-                <TableCell className="fw-bold text-nowrap">Branch</TableCell>
-                <TableCell className="fw-bold text-nowrap">Room</TableCell>
-                <TableCell className="fw-bold text-nowrap">Cot</TableCell>
-                <TableCell className="fw-bold text-nowrap">Complaint Date</TableCell>
-                <TableCell className="fw-bold text-nowrap">Mobile No</TableCell>
-                <TableCell className="fw-bold text-nowrap">Nature of Complaint</TableCell>
-                <TableCell className="fw-bold text-nowrap">Sub Category</TableCell>
-                <TableCell className="fw-bold text-nowrap">Description</TableCell>
-                <TableCell className="fw-bold text-nowrap">Images</TableCell>
-                <TableCell className="fw-bold text-nowrap">Created By</TableCell>
-                <TableCell className="fw-bold text-nowrap">Assign To</TableCell>
-                <TableCell className="fw-bold text-nowrap">Assigned By</TableCell>
-                <TableCell className="fw-bold text-nowrap">Picked On</TableCell>
-                <TableCell className="fw-bold text-nowrap">Closed On</TableCell>
-                <TableCell className="fw-bold text-nowrap">Closed By</TableCell>
-                <TableCell className="fw-bold text-nowrap">Status</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data?.length > 0
-                ? data
-                  .filter((content: ComplaintDetail) => {
-                    const lowerSearchInput = _search?.toLowerCase()?.trim();
-                    return (
-                      lowerSearchInput === "" ||
-                      Object?.values(content)?.some((value) => value?.toString()?.toLowerCase()?.includes(lowerSearchInput))
-                    );
-                  })
-                  .map((row, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{idx + 1}</TableCell>
-                      <TableCell>{row.creator || "-"}</TableCell>
-                      <TableCell>{row.branchName || "-"}</TableCell>
-                      <TableCell>{row.roomNumber || "-"}</TableCell>
-                      <TableCell>{row.cotNumber || "-"}</TableCell>
-                      <TableCell>{row.complaintDate || "-"}</TableCell>
-                      <TableCell>{row.mobileNumber || "-"}</TableCell>
-                      <TableCell>{row.natureOfComplaint || "-"}</TableCell>
-                      <TableCell>{row.issueSubCategoryName || "-"}</TableCell>
-                      <TableCell>{row.description || "-"}</TableCell>
-                      <TableCell>
-                        {row.imageUrl ? (
-                          row.imageUrl.split(',').map((url: string, imgIdx: number) => (
-                            <a key={imgIdx} href={url.trim()} target="_blank" rel="noopener noreferrer" className="me-2">
-                              Image {imgIdx + 1}
-                            </a>
-                          ))
-                        ) : "-"}
-                      </TableCell>
-                      <TableCell>{row.createdBy || "-"}</TableCell>
-                      <TableCell>{row.assignTo || "-"}</TableCell>
-                      <TableCell>{row.assignedBy || "-"}</TableCell>
-                      <TableCell>{row.pickedOn || "-"}</TableCell>
-                      <TableCell>{row.closedOn || "-"}</TableCell>
-                      <TableCell>{row.closedBy || "-"}</TableCell>
-                      <TableCell>{row.status || "-"}</TableCell>
-                    </TableRow>
-                  ))
-                : !loading && (
-                  <TableRow>
-                    <TableCell className="fs-3 text-muted" align="center" colSpan={18}>Data Not Found</TableCell>
-                  </TableRow>
-                )}
-              <SkeletonProviderTables columns={18} visible={loading} />
-            </TableBody>
-          </Table>
-        </div>
+    <DialogModal
+      open={open}
+      onClose={onClose}
+      title={TITLE_MAP[type] || 'Complaint Details'}
+      maxWidth="lg"
+      actions={
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', width: '100%' }}>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search complaints..." />
+          <ExportButton onExport={exportEXCEL} />
+        </Box>
       }
-      actionContent={
-        <div className="flex-grow-1">
-          <hr className="mt-0" />
-          <div className="my-2 d-flex justify-content-center align-items-center gap-4">
-            <div className="d-flex align-items-center">
-              <TextField
-                size="small"
-                fullWidth
-                className="bg-white py-0"
-                value={_search}
-                onChange={(e) => _setSearch(e.target.value)}
-                placeholder="Search"
-                InputProps={{
-                  endAdornment: (
-                    <img
-                      height={18}
-                      src={IMAGES_ICON.TableSearchIcon}
-                      role="button"
-                      draggable="false"
-                    />
-                  ),
-                }}
-              />
-            </div>
-            <img height={24} src={IMAGES_ICON.TableDownloadIcon} role="button" draggable="false" onClick={exportEXCEL} />
-          </div>
-        </div>
-      }
-    />
+    >
+      <DataTable
+        columns={columns}
+        data={filteredData}
+        loading={loading}
+        skeletonRows={5}
+        emptyTitle="No data found"
+        emptyDescription="No complaint records match your criteria"
+      />
+    </DialogModal>
   );
 }

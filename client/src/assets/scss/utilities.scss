@@ -1,0 +1,16 @@
+// ── Minimal Utilities ──────────────────────────────────────
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.required::after {
+  content: " *";
+  color: #F04438 !important;
+}

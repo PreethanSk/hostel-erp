@@ -1,0 +1,93 @@
+// ── Layout: Sidebar + Header + Content ─────────────────────
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-sidebar {
+  width: $sidebar-width;
+  background-color: $sidebar-bg;
+  color: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1200;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 200ms ease;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  &--collapsed {
+    width: $sidebar-width-collapsed;
+  }
+}
+
+.app-main {
+  flex: 1;
+  margin-left: $sidebar-width;
+  transition: margin-left 200ms ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+  &--expanded {
+    margin-left: $sidebar-width;
+  }
+
+  &--collapsed {
+    margin-left: $sidebar-width-collapsed;
+  }
+}
+
+.app-header {
+  height: $header-height;
+  background-color: #fff;
+  border-bottom: 1px solid $gray-200;
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+}
+
+.app-breadcrumbs {
+  height: 40px;
+  background-color: #fff;
+  border-bottom: 1px solid $gray-200;
+  display: flex;
+  align-items: center;
+  padding: 8px 24px;
+}
+
+.app-content {
+  flex: 1;
+  padding: 24px;
+  background-color: $page-bg;
+  overflow-y: auto;
+}
+
+// ── Responsive ─────────────────────────────────────────────
+@media (max-width: 1279px) {
+  .app-sidebar {
+    width: $sidebar-width-collapsed;
+  }
+  .app-main {
+    margin-left: $sidebar-width-collapsed;
+  }
+}
+
+@media (max-width: 767px) {
+  .app-sidebar {
+    display: none;
+  }
+  .app-main {
+    margin-left: 0;
+  }
+}
