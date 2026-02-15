@@ -9,6 +9,7 @@ module.exports = (sequelize) => {
             branchId: { type: DataTypes.BIGINT, allowNull: true },
             categoryId: { type: DataTypes.BIGINT, allowNull: true },
             subCategoryId: { type: DataTypes.STRING, allowNull: true },
+            facilityId: { type: DataTypes.STRING, allowNull: true },
             isActive: { type: DataTypes.BOOLEAN, allowNull: true },
             description: { type: DataTypes.TEXT, allowNull: true },
         },

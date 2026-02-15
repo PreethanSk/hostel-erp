@@ -669,6 +669,7 @@ exports.insertUpdateMasterIssueSubCategories = async (req, res) => {
 
     const existing = await db.MasterIssueSubCategories.findOne({
       where: {
+        issueId: body.issueId,
         subCategoryName: db.Sequelize.where(
           db.Sequelize.fn('LOWER', db.Sequelize.col('subCategoryName')),
           req.body.subCategoryName.toLowerCase()
@@ -678,7 +679,7 @@ exports.insertUpdateMasterIssueSubCategories = async (req, res) => {
     });
 
     if (existing) {
-      return res.status(200).json(await formatResponse.error("Issue sub type already exists"));
+      return res.status(200).json(await formatResponse.error("This sub-category name already exists under the selected issue category"));
     }
 
     let insertResponse = null;
